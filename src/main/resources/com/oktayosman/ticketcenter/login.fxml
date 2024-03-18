@@ -10,11 +10,16 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="520.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.LoginController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
+            minWidth="-Infinity" prefHeight="400.0" prefWidth="520.0"
+            xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.LoginController">
     <left>
         <AnchorPane prefHeight="407.0" prefWidth="228.0" BorderPane.alignment="CENTER">
             <children>
-                <ImageView fx:id="brandingImageView" fitHeight="400.0" fitWidth="228.0" layoutY="86.0" pickOnBounds="true" preserveRatio="true">
+                <ImageView fx:id="brandingImageView" fitHeight="400.0"
+                           fitWidth="228.0" layoutY="86.0" pickOnBounds="true"
+                           preserveRatio="true">
                     <image>
                         <Image url="images/Logo.png"/>
                     </image>
@@ -44,7 +49,8 @@
                         <Font size="13.0"/>
                     </font>
                 </Label>
-                <PasswordField fx:id="enterPasswordField" layoutX="92.0" layoutY="188.0" prefHeight="26.0"
+                <PasswordField fx:id="enterPasswordField"
+                               layoutX="92.0" layoutY="188.0" prefHeight="26.0"
                                prefWidth="173.0" promptText="Password"/>
                 <Button fx:id="loginButton"
                         layoutX="22.0"
