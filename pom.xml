@@ -69,7 +69,7 @@
             <!-- Default configuration for running with: mvn clean javafx:run -->
             <id>default-cli</id>
             <configuration>
-              <mainClass>com.oktayosman.ticketcenter/com.oktayosman.ticketcenter.HelloApplication</mainClass>
+              <mainClass>com.oktayosman.ticketcenter/app.Application</mainClass>
               <launcher>app</launcher>
               <jlinkZipName>app</jlinkZipName>
               <jlinkImageName>app</jlinkImageName>
