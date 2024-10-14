@@ -16,15 +16,11 @@
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.LoginController">
     <left>
         <AnchorPane prefHeight="407.0" prefWidth="228.0" BorderPane.alignment="CENTER">
-            <children>
-                <ImageView fx:id="brandingImageView" fitHeight="400.0"
-                           fitWidth="228.0" layoutY="86.0" pickOnBounds="true"
-                           preserveRatio="true">
-                    <image>
-                        <Image url="@/images/Logo.png"/>
-                    </image>
-                </ImageView>
-            </children>
+            <ImageView fx:id="brandingImageView" fitHeight="400.0"
+                       fitWidth="228.0" layoutY="86.0" pickOnBounds="true"
+                       preserveRatio="true">
+                <Image url="@../images/Logo.png" />
+            </ImageView>
         </AnchorPane>
     </left>
     <center>

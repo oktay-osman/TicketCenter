@@ -59,8 +59,13 @@ public class LoginController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        File brandingFile = new File("images/Logo.png");
-        Image brandingImage = new Image(brandingFile.toURI().toString());
-        brandingImageView.setImage(brandingImage);
+        Image logo = new Image(getClass().getResourceAsStream("/images/Logo.png"));
+
+        if (logo.isError()) {
+            System.out.println("Error loading image: " + logo.getException());
+        } else {
+            System.out.println("Image loaded successfully.");
+            brandingImageView.setImage(logo);
+        }
     }
 }

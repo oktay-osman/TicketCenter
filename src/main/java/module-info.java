@@ -9,4 +9,6 @@ module com.oktayosman.ticketcenter {
     exports controller;
     exports service;
     exports model;
+
+    opens controller to javafx.fxml;
 }
