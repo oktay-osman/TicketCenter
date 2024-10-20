@@ -1,6 +1,6 @@
-package model;
+package app.model;
 
-import service.PasswordEncryptor;
+import app.service.PasswordEncryptor;
 
 import javax.persistence.*;
 @Entity

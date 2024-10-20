@@ -1,4 +1,4 @@
-package controller;
+package app.controller;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -9,10 +9,8 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -44,17 +42,22 @@ public class LoginController implements Initializable {
 
     @FXML
     void loginButtonOnAction(ActionEvent event) {
-        if (!usernameTextField.getText().isEmpty() &&
-                !enterPasswordField.getText().isEmpty()) {
-            checkLogin();
-        } else {
-            loginMessageLabel.setTextFill(Color.RED);
-            loginMessageLabel.setText("Please enter a valid username/password");
-        }
-    }
+        String username = usernameTextField.getText();
+        String password = enterPasswordField.getText();
+//        User user = userService.authenticate(username, password);
 
-    public void checkLogin() {
-
+//        if (null != null) {
+//            try {
+////                FXMLLoader loader = new FXMLLoader((getClass().getResource("/fxml")))
+//
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                loginMessageLabel.setText("Error loading dashboard");
+//            }
+//        } else {
+//            loginMessageLabel.setTextFill(Color.RED);
+//            loginMessageLabel.setText("Please enter a valid username/password");
+//        }
     }
 
     @Override
