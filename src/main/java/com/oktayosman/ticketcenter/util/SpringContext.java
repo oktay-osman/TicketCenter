@@ -9,11 +9,21 @@ public class SpringContext {
         context = applicationContext;
     }
 
+    public static ApplicationContext getContext() {
+        return context;
+    }
+
     public static <T> T getBean(Class<T> beanClass) {
+        if (context == null) {
+            throw new IllegalStateException("Spring ApplicationContext is not initialized");
+        }
         return context.getBean(beanClass);
     }
 
     public static Object getBean(String beanName) {
+        if (context == null) {
+            throw new IllegalStateException("Spring ApplicationContext is not initialized");
+        }
         return context.getBean(beanName);
     }
 }
