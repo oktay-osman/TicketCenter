@@ -21,24 +21,9 @@ public class UserService {
         this.roleRepository = roleRepository;
     }
 
-    public void registerUser(String username, String password) {
-        if (userRepository.getUserByUsername(username) != null) {
-            throw new IllegalArgumentException("Username already exists");
-        }
-
-        Role defaultRole = roleRepository.findByName(DEFAULT_ROLE_NAME);
-        if (defaultRole == null) {
-            throw new IllegalStateException("Default role not found: " + DEFAULT_ROLE_NAME);
-        }
-
-        String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-        User user = new User(username, hashedPassword, defaultRole);
-        userRepository.save(user);
-    }
-
     public User authenticate(String username, String password) {
         User user = userRepository.getUserByUsername(username);
-        if (user != null && BCrypt.checkpw(password, user.getPassword())) {
+        if (user != null && user.verifyPassword(password)) {
             return user;
         }
         return null;
