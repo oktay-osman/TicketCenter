@@ -43,19 +43,18 @@ public class LoginController {
     private UserService userService;
 
     @FXML
-    void cancelButtonOnAction(ActionEvent event) {
+    void cancelButtonOnAction() {
         Stage stage = (Stage) cancelButton.getScene().getWindow();
         stage.close();
     }
 
     @FXML
-    void loginButtonOnAction(ActionEvent event) {
-        String username = usernameTextField.getText();
+    void loginButtonOnAction() {
+        String username = usernameTextField.getText().trim();
         String password = enterPasswordField.getText();
 
         if (username.isEmpty() || password.isEmpty()) {
-            loginMessageLabel.setTextFill(Color.RED);
-            loginMessageLabel.setText("Please enter username and password");
+            showErrorMessage("Please enter your username and password");
             return;
         }
 
@@ -63,21 +62,17 @@ public class LoginController {
             User user = userService.authenticate(username, password);
 
             if (user != null) {
-                loginMessageLabel.setTextFill(Color.GREEN);
-                loginMessageLabel.setText("Login successful!");
-
+                showSuccessMessage();
                 String fxmlFile = getFxmlFileBasedOnRole(user.getRole().getName());
                 loadDashboard(fxmlFile, user.getRole().getName());
             } else {
-                loginMessageLabel.setTextFill(Color.RED);
-                loginMessageLabel.setText("Invalid username or password");
+                showErrorMessage("Invalid username or password");
+                enterPasswordField.clear();
             }
         } catch (IllegalArgumentException e) {
-            loginMessageLabel.setTextFill(Color.RED);
-            loginMessageLabel.setText("Invalid role configuration");
+            showErrorMessage("Invalid role configuration");
         } catch (IOException e) {
-            loginMessageLabel.setTextFill(Color.RED);
-            loginMessageLabel.setText("Error loading dashboard");
+            showErrorMessage("Error loading dashboard");
             e.printStackTrace();
         }
     }
@@ -109,5 +104,31 @@ public class LoginController {
         stage.setScene(new Scene(root));
         stage.setTitle(roleName + " Dashboard");
         stage.show();
+    }
+
+    @FXML
+    private void registerButtonOnAction() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/register.fxml"));
+            loader.setControllerFactory(SpringContext::getBean);
+            Parent root = loader.load();
+
+            Stage stage = new Stage();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Register");
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showErrorMessage(String message) {
+        loginMessageLabel.setTextFill(Color.RED);
+        loginMessageLabel.setText(message);
+    }
+
+    private void showSuccessMessage() {
+        loginMessageLabel.setTextFill(Color.GREEN);
+        loginMessageLabel.setText("Login successful!");
     }
 }

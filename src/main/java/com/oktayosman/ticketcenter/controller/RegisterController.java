@@ -8,7 +8,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 
+@Controller
 public class RegisterController {
 
     @FXML
@@ -64,25 +66,34 @@ public class RegisterController {
             return;
         }
 
-         boolean success = userService.registerUser(new User(firstName, lastName, email, username, password, new Role("USER")));
-         if (success) {
-             registrationMessageLabel.setText("Registration successful!");
-         } else {
-             registrationMessageLabel.setText("Registration failed. Please try again.");
-         }
+        try{
+            User newUser = new User(firstName, lastName, email, username, password, null);
+            boolean success = userService.registerUser(newUser);
 
-        firstnameTextField.clear();
-        lastnameTextField.clear();
-        emailTextField.clear();
-        usernameTextField.clear();
-        setPasswordField.clear();
-        confirmPasswordField.clear();
-        registrationMessageLabel.setText("Registration successful!");
+            if (success) {
+                registrationMessageLabel.setText("Registration successful!");
+                clearFields();
+            } else {
+                registrationMessageLabel.setText("Registration failed. Please try again.");
+            }
+        } catch (Exception e) {
+            registrationMessageLabel.setText("Registration failed. Please try again.");
+        }
+
     }
 
     @FXML
     void closeButtonOnAction(ActionEvent event) {
         Stage stage = (Stage) closeButton.getScene().getWindow();
         stage.close();
+    }
+
+    void clearFields() {
+        firstnameTextField.clear();
+        lastnameTextField.clear();
+        emailTextField.clear();
+        usernameTextField.clear();
+        setPasswordField.clear();
+        confirmPasswordField.clear();
     }
 }
