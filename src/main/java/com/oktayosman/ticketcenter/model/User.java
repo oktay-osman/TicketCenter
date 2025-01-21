@@ -1,8 +1,12 @@
 package com.oktayosman.ticketcenter.model;
 
-
 import jakarta.persistence.*;
+import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.mindrot.jbcrypt.BCrypt;
+
+import java.time.LocalDateTime;
 
 
 @Entity
@@ -19,18 +23,28 @@ public class User {
     @Column(nullable = false)
     private String lastName;
 
+    @NotBlank
     @Column(nullable = false)
     private String email;
 
+    @NotBlank
     @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(nullable = false)
+    @Column(name = "password_hash", nullable = false)
     private String password;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
 
     public User() {
@@ -41,13 +55,7 @@ public class User {
         this.lastName = lastName;
         this.email = email;
         this.username = username;
-        this.password = hashPassword(password);
-        this.role = role;
-    }
-
-    public User(String username, String password, Role role) {
-        this.username = username;
-        this.password = password;
+        this.setPassword(password);
         this.role = role;
     }
 
@@ -60,16 +68,15 @@ public class User {
         return username;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public String getPassword() {
         return password;
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Password cannot be null or blank");
+        }
+        this.password = hashPassword(password);
     }
 
     public Role getRole() {
@@ -84,7 +91,10 @@ public class User {
         return BCrypt.hashpw(password, BCrypt.gensalt(12));
     }
 
-    private boolean verifyPassword (String plainPassword) {
+    public boolean verifyPassword(String plainPassword) {
+        if (plainPassword == null || this.password == null) {
+            return false;
+        }
         return BCrypt.checkpw(plainPassword, this.password);
     }
 }
