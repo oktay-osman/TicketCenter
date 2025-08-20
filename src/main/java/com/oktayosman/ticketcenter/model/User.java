@@ -8,8 +8,8 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import java.time.LocalDateTime;
 
-
 @Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "users")
 public class User {
 
@@ -24,7 +24,7 @@ public class User {
     private String lastName;
 
     @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @NotBlank
@@ -34,7 +34,7 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String password;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
@@ -96,5 +96,9 @@ public class User {
             return false;
         }
         return BCrypt.checkpw(plainPassword, this.password);
+    }
+
+    public String getEmail() {
+        return this.email;
     }
 }
