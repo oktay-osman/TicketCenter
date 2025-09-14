@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.oktayosman.ticketcenter.controller.AdminDashboardController"
+            prefWidth="1100.0" prefHeight="700.0">
+
+    <!-- TOP MENU BAR -->
+    <top>
+        <ToolBar>
+            <Button text="Users" onAction="#handleManageUsers"/>
+            <Button text="Events" onAction="#handleManageEvents"/>
+            <Button text="Reports" onAction="#handleViewReports"/>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <Label fx:id="adminLabel" text="Admin Panel"/>
+            <Button fx:id='logoutButton' text="Logout" onAction="#handleLogout"/>
+        </ToolBar>
+    </top>
+
+    <!-- CENTER CONTENT AREA -->
+    <center>
+        <VBox spacing="16" VBox.vgrow="ALWAYS">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <Label text="Administrator Dashboard" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+            <!-- KPI cards grid -->
+            <GridPane hgap="16" vgap="16">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <!-- Users -->
+                <VBox GridPane.columnIndex="0" spacing="6" style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 16; -fx-border-color: #e5e5e5; -fx-border-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);">
+                    <Label text="Total Users" style="-fx-font-size: 12px; -fx-text-fill: #6b7280;"/>
+                    <Label fx:id="totalUsersLabel" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+                </VBox>
+
+                <!-- Events -->
+                <VBox GridPane.columnIndex="1" spacing="6" style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 16; -fx-border-color: #e5e5e5; -fx-border-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);">
+                    <Label text="Total Events" style="-fx-font-size: 12px; -fx-text-fill: #6b7280;"/>
+                    <Label fx:id="totalEventsLabel" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+                </VBox>
+
+                <!-- Tickets -->
+                <VBox GridPane.columnIndex="2" spacing="6" style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 16; -fx-border-color: #e5e5e5; -fx-border-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);">
+                    <Label text="Total Tickets Sold" style="-fx-font-size: 12px; -fx-text-fill: #6b7280;"/>
+                    <Label fx:id="totalTicketsLabel" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+                </VBox>
+
+                <!-- Revenue -->
+                <VBox GridPane.columnIndex="3" spacing="6" style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 16; -fx-border-color: #e5e5e5; -fx-border-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);">
+                    <Label text="Revenue" style="-fx-font-size: 12px; -fx-text-fill: #6b7280;"/>
+                    <Label fx:id="totalRevenueLabel" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+                </VBox>
+            </GridPane>
+
+            <Separator/>
+
+            <Label text="Recent Activity" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+            <ListView fx:id="recentActivityList" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </center>
+
+</BorderPane>
