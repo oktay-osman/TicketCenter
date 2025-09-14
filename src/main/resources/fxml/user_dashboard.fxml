@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/21"
+            fx:controller="com.oktayosman.ticketcenter.controller.UserDashboardController"
+            stylesheets="@../styles.css">
+
+    <top>
+        <HBox spacing="10" styleClass="top-bar" alignment="CENTER_LEFT">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+
+            <!-- Existing Controls (Left) -->
+            <Label text="Search:"/>
+            <TextField fx:id="searchField" promptText="Search events..." HBox.hgrow="ALWAYS"/>
+            <Label text="Genre:"/>
+            <ComboBox fx:id="genreFilter" promptText="All Genres">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="All"/>
+                        <String fx:value="Musicals"/>
+                        <String fx:value="Concerts"/>
+                        <String fx:value="Fights"/>
+                        <String fx:value="Theater"/>
+                    </FXCollections>
+                </items>
+            </ComboBox>
+            <Button text="Filter" onAction="#handleFilterAction" styleClass="button"/>
+
+            <Region HBox.hgrow="ALWAYS" />
+
+            <Label fx:id="greetingLabel" text="Hello, {first_name}" />
+            <Button fx:id="logoutButton" text="Logout" onAction="#handleLogout" styleClass="button"/>
+        </HBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" fitToHeight="true">
+            <content>
+                <VBox spacing="20">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+
+                    <!-- Section Header -->
+                    <Label text="Upcoming Events" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+
+                    <TilePane fx:id="eventsTilePane" hgap="20" vgap="20" prefColumns="3">
+
+                        <!-- Hardcoded Event Card 1 -->
+                        <VBox spacing="10" styleClass="event-card">
+                            <ImageView fitWidth="200" fitHeight="150" preserveRatio="true">
+                                <image>
+                                    <Image url="@/images/sample_event1.jpg"/>
+                                </image>
+                            </ImageView>
+                            <Label text="Concert Night" styleClass="event-name"/>
+                            <Label text="June 25, 2025 | 8:00 PM" styleClass="event-date"/>
+                            <Label text="Concert" styleClass="event-genre"/>
+                            <Button text="View Details" onAction="#handleViewDetails" styleClass="button"/>
+                        </VBox>
+
+                        <!-- Hardcoded Event Card 2 -->
+                        <VBox spacing="10" styleClass="event-card">
+                            <ImageView fitWidth="200" fitHeight="150" preserveRatio="true">
+                                <image>
+                                    <Image url="@../images/sample_event2.jpg"/>
+                                </image>
+                            </ImageView>
+                            <Label text="Broadway Musical" styleClass="event-name"/>
+                            <Label text="July 10, 2025 | 7:30 PM" styleClass="event-date"/>
+                            <Label text="Musical" styleClass="event-genre"/>
+                            <Button text="View Details" onAction="#handleViewDetails" styleClass="button"/>
+                        </VBox>
+
+                        <!-- Hardcoded Event Card 3 -->
+                        <VBox spacing="10" styleClass="event-card">
+                            <ImageView fitWidth="200" fitHeight="150" preserveRatio="true">
+                                <image>
+                                    <Image url="@/images/sample_event3.jpg"/>
+                                </image>
+                            </ImageView>
+                            <Label text="Boxing Championship" styleClass="event-name"/>
+                            <Label text="August 5, 2025 | 6:00 PM" styleClass="event-date"/>
+                            <Label text="Fights" styleClass="event-genre"/>
+                            <Button text="View Details" onAction="#handleViewDetails" styleClass="button"/>
+                        </VBox>
+
+                    </TilePane>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+
+    <!-- Bottom Section: Status Bar -->
+    <bottom>
+        <HBox alignment="CENTER">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+            <Label text="Welcome to TicketCenter!" styleClass="status-label"/>
+        </HBox>
+    </bottom>
+</BorderPane>
