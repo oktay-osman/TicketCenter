@@ -1,64 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="400.0" prefWidth="520.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.oktayosman.ticketcenter.controller.LoginController">
+<BorderPane prefHeight="400.0" prefWidth="520.0"
+            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.oktayosman.ticketcenter.controller.LoginController"
+            stylesheets="@../styles.css">
+
+    <!-- Left: Branding Image -->
     <left>
-        <AnchorPane prefHeight="407.0" prefWidth="228.0" BorderPane.alignment="CENTER">
-            <ImageView fx:id="brandingImageView" fitHeight="400.0" fitWidth="228.0" layoutY="86.0" pickOnBounds="true" preserveRatio="true">
+        <VBox alignment="CENTER" prefWidth="228.0" spacing="10">
+            <padding>
+                <Insets top="20" bottom="20" left="10" right="10"/>
+            </padding>
+            <ImageView fx:id="brandingImageView" fitWidth="180" preserveRatio="true">
                 <image>
-                    <Image url="@../images/logo.png" />
+                    <Image url="@../images/logo.png"/>
                 </image>
             </ImageView>
-        </AnchorPane>
+        </VBox>
     </left>
+
+    <!-- Center: Login Form -->
     <center>
-        <AnchorPane prefHeight="400.0" prefWidth="332.0" style="-fx-background-color: #ECECE7;" BorderPane.alignment="CENTER">
-            <children>
-                <!-- Title Label -->
-                <Label alignment="CENTER" layoutX="22.0" layoutY="50.0" prefWidth="249.0" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #083b66;" text="Login" />
+        <VBox alignment="CENTER" spacing="20" styleClass="login-form-container">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
 
-                <!-- Username Field -->
-                <Label layoutX="26.0" layoutY="150.0" text="Username">
-                    <font>
-                        <Font name="Gadugi" size="13.0" />
-                    </font>
-                </Label>
-                <TextField fx:id="usernameTextField" layoutX="92.0" layoutY="147.0" prefHeight="26.0" prefWidth="173.0" promptText="Username" />
+            <!-- Title -->
+            <Label text="Login" styleClass="login-title"/>
 
-                <!-- Password Field -->
-                <Label layoutX="28.0" layoutY="191.0" text="Password">
-                    <font>
-                        <Font size="13.0" />
-                    </font>
-                </Label>
-                <PasswordField fx:id="enterPasswordField" layoutX="92.0" layoutY="188.0" prefHeight="26.0" prefWidth="173.0" promptText="Password" />
+            <!-- Form Fields -->
+            <GridPane hgap="10" vgap="15" alignment="CENTER">
+                <!-- Username -->
+                <Label text="Username:" GridPane.columnIndex="0" GridPane.rowIndex="0" styleClass="login-label"/>
+                <TextField fx:id="usernameTextField" promptText="Enter your username" GridPane.columnIndex="1" GridPane.rowIndex="0" styleClass="login-textfield"/>
 
-                <!-- Login Button -->
-                <Button fx:id="loginButton" layoutX="22.0" layoutY="260.0" mnemonicParsing="false" onAction="#loginButtonOnAction" prefHeight="32.0" prefWidth="249.0" style="-fx-background-color: #083b66;" text="Login" textFill="WHITE">
-                    <font>
-                        <Font size="13.0" />
-                    </font>
-                </Button>
+                <!-- Password -->
+                <Label text="Password:" GridPane.columnIndex="0" GridPane.rowIndex="1" styleClass="login-label"/>
+                <PasswordField fx:id="enterPasswordField" promptText="Enter your password" GridPane.columnIndex="1" GridPane.rowIndex="1" styleClass="login-textfield"/>
+            </GridPane>
 
-                <!-- Register Link -->
-                <Label alignment="CENTER" layoutX="22.0" layoutY="310.0" onMouseClicked="#registerButtonOnAction" prefWidth="249.0" style="-fx-underline: true; -fx-font-size: 12px; -fx-cursor: hand;" text="Don't have an account? Register here" textFill="#083b66" />
+            <!-- Login Message -->
+            <Label fx:id="loginMessageLabel" alignment="CENTER" styleClass="login-message"/>
 
-                <!-- Login Message Label -->
-                <Label fx:id="loginMessageLabel" alignment="CENTER" layoutX="22.0" layoutY="230.0" prefHeight="19.0" prefWidth="247.0" textAlignment="CENTER" textFill="#d70c0c">
-                    <font>
-                        <Font size="13.0" />
-                    </font>
-                </Label>
-            </children>
-        </AnchorPane>
+            <!-- Login Button -->
+            <Button fx:id="loginButton" text="Login" onAction="#loginButtonOnAction" styleClass="button" prefWidth="150"/>
+
+            <!-- Register Link -->
+            <HBox alignment="CENTER" spacing="5">
+                <Label text="Don't have an account?" styleClass="login-link-label"/>
+                <Label text="Register here" onMouseClicked="#registerButtonOnAction" styleClass="login-register-link"/>
+            </HBox>
+        </VBox>
     </center>
 </BorderPane>
