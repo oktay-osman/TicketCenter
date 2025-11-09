@@ -6,7 +6,7 @@ A desktop application for managing ticket sales and events, built with JavaFX an
 
 ## Features
 - [x] User registration and login
-- [ ] Role-based access control
+- [x] Role-based access control
 - [ ] Event creation and management
 - [ ] Ticket sales and distribution
 
