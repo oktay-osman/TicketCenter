@@ -14,16 +14,25 @@ public class Notification {
     @Column(nullable = false)
     private String message;
 
-    @Column(nullable = false)
+    @Column(name = "is_read", nullable = false)
     private boolean read = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User recipient;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_id")
+    private Event event;
+
     public Notification() {}
 
-    public Notification(String message) {
+    public Notification(String message, User recipient) {
         this.message = message;
+        this.recipient = recipient;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -41,6 +50,22 @@ public class Notification {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public User getRecipient() {
+        return recipient;
+    }
+
+    public void setRecipient(User recipient) {
+        this.recipient = recipient;
+    }
+
+    public Event getEvent() {
+        return event;
+    }
+
+    public void setEvent(Event event) {
+        this.event = event;
     }
 
     public void markAsRead() {
