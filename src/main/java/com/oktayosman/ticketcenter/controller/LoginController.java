@@ -2,12 +2,13 @@ package com.oktayosman.ticketcenter.controller;
 
 import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.service.UserService;
+import com.oktayosman.ticketcenter.util.SessionManager;
 import com.oktayosman.ticketcenter.util.SpringContext;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.scene.paint.Color;
 import javafx.fxml.FXMLLoader;
@@ -60,20 +61,21 @@ public class LoginController {
 
         try {
             User user = userService.authenticate(username, password);
-
             if (user != null) {
+                SessionManager.setCurrentUser(user);
                 showSuccessMessage();
-                String fxmlFile = getFxmlFileBasedOnRole(user.getRole().getName());
-                loadDashboard(fxmlFile, user.getRole().getName());
+                String userRole = user.getRole().getName();
+                String fxmlFile = getFxmlFileBasedOnRole(userRole);
+                loadDashboard(fxmlFile, userRole);
             } else {
                 showErrorMessage("Invalid username or password");
                 enterPasswordField.clear();
             }
+        } catch (IOException e) {
+            showErrorMessage("Error loading the dashboard");
+            e.printStackTrace();
         } catch (IllegalArgumentException e) {
             showErrorMessage("Invalid role configuration");
-        } catch (IOException e) {
-            showErrorMessage("Error loading dashboard");
-            e.printStackTrace();
         }
     }
 
@@ -87,10 +89,11 @@ public class LoginController {
     }
 
     private String getFxmlFileBasedOnRole(String roleName) {
-        return switch (roleName) {
-            case "ADMIN" -> "/fxml/admin.fxml";
-            case "ORGANIZER" -> "/fxml/organizer.fxml";
-            case "DISTRIBUTOR" -> "/fxml/distributor.fxml";
+        return switch (roleName.toUpperCase()) {
+            case "USER" -> "/fxml/user_dashboard.fxml";
+            case "ADMIN" -> "/fxml/admin_dashboard.fxml";
+            case "ORGANIZER" -> "/fxml/organizer_dashboard.fxml";
+            case "DISTRIBUTOR" -> "/fxml/distributor_dashboard.fxml";
             default -> throw new IllegalArgumentException("Invalid role: " + roleName);
         };
     }
