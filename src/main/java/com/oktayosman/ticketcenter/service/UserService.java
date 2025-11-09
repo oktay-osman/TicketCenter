@@ -4,7 +4,6 @@ import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.model.Role;
 import com.oktayosman.ticketcenter.repository.UserRepository;
 import com.oktayosman.ticketcenter.repository.RoleRepository;
-import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,26 +21,19 @@ public class UserService {
     }
 
     public User authenticate(String username, String password) {
-        User user = userRepository.getUserByUsername(username);
-        if (user != null && user.verifyPassword(password)) {
-            return user;
-        }
-        return null;
+        return userRepository.findByUsername(username)
+                .filter(user -> user.verifyPassword(password))
+                .orElse(null);
     }
 
     public boolean registerUser(User user) {
-        if (userRepository.getUserByUsername(user.getUsername()) != null) {
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             return false;
         }
 
-        Role defaultRole = roleRepository.findByName(DEFAULT_ROLE_NAME);
-        if (defaultRole == null) {
-            throw new IllegalStateException("Default role not found: " + DEFAULT_ROLE_NAME);
-        }
-
+        Role defaultRole = roleRepository.findByName(DEFAULT_ROLE_NAME)
+                .orElseThrow(() -> new IllegalStateException("Default role not found: " + DEFAULT_ROLE_NAME));
         user.setRole(defaultRole);
-        String hashedPassword = BCrypt.hashpw(user.getPassword(), BCrypt.gensalt());
-        user.setPassword(hashedPassword);
         userRepository.save(user);
         return true;
     }
