@@ -23,7 +23,8 @@ import java.io.IOException;
 
 @Controller
 public class UserDashboardController {
-
+    @FXML
+    public Button cartButton;
     @FXML
     private TextField searchField;
 
@@ -47,49 +48,56 @@ public class UserDashboardController {
         } else {
             greetingLabel.setText("Hello, Guest");
         }
-        loadPlaceholderEvents();
+        loadEvents();
     }
 
     @FXML
     private void handleFilterAction() {
         String searchQuery = searchField.getText().trim().toLowerCase();
-        String selectedGenre = genreFilter.getValue();
+        String selectedGenre = genreFilter.getValue().trim().toLowerCase();
 
         eventsTilePane.getChildren().clear();
-
-        if (searchQuery.isEmpty() && (selectedGenre == null || selectedGenre.equals("All"))) {
-            loadPlaceholderEvents();
+        if (searchQuery.isEmpty() && (selectedGenre.isEmpty() || selectedGenre.equals("all"))) {
+            loadEvents();
         } else {
             loadFilteredPlaceholderEvents(searchQuery, selectedGenre);
         }
     }
 
-    private void loadPlaceholderEvents() {
-        eventsTilePane.getChildren().clear();
-
-        for (int i = 1; i <= 3; i++) {
-            VBox eventCard = createPlaceholderEventCard("Event " + i, "Category " + i, "Description for Event " + i);
-            eventsTilePane.getChildren().add(eventCard);
-        }
-    }
-
     private void loadFilteredPlaceholderEvents(String searchQuery, String selectedGenre) {
-        for (int i = 1; i <= 3; i++) {
-            if (("Event " + i).toLowerCase().contains(searchQuery) || ("Category " + i).equals(selectedGenre)) {
-                VBox eventCard = createPlaceholderEventCard("Event " + i, "Category " + i, "Description for Event " + i);
+        eventsTilePane.getChildren().clear();
+        for (MockEvent e : getMockEvents()) {
+            boolean matchesSearch = searchQuery.isEmpty() || e.getTitle().toLowerCase().contains(searchQuery);
+            boolean matchesGenre = (selectedGenre == null || selectedGenre.equalsIgnoreCase("All")
+                    || e.getCategory().equalsIgnoreCase(selectedGenre));
+            if (matchesSearch && matchesGenre) {
+                VBox eventCard = createEventCard(e.getTitle(), e.getCategory(), e.getDescription(), e.getImageUrl());
                 eventsTilePane.getChildren().add(eventCard);
             }
         }
     }
 
-    private VBox createPlaceholderEventCard(String title, String category, String description) {
+    private void loadEvents() {
+        eventsTilePane.getChildren().clear();
+        for (MockEvent e : getMockEvents()) {
+            VBox eventCard = createEventCard(e.getTitle(), e.getCategory(), e.getDescription(), e.getImageUrl());
+            eventsTilePane.getChildren().add(eventCard);
+        }
+    }
+
+    private VBox createEventCard(String title, String category, String description, String imageUrl) {
         VBox eventCard = new VBox(10);
         eventCard.setStyle("-fx-padding: 10; -fx-border-color: #ccc; -fx-background-color: #f9f9f9; -fx-border-radius: 5; -fx-background-radius: 5;");
 
-        ImageView imageView = new ImageView(new Image("https://via.placeholder.com/200x150.png?text=Event+Image"));
-        imageView.setFitWidth(200);
-        imageView.setFitHeight(150);
-        imageView.setPreserveRatio(true);
+        ImageView imageView;
+        try {
+            imageView = new ImageView(new Image(imageUrl, 200, 150, true, true));
+        } catch (Exception ex) {
+            imageView = new ImageView();
+            imageView.setFitWidth(200);
+            imageView.setFitHeight(150);
+            imageView.setPreserveRatio(true);
+        }
 
         Label titleLabel = new Label(title);
         titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
@@ -101,9 +109,7 @@ public class UserDashboardController {
         descriptionLabel.setWrapText(true);
 
         Button viewDetailsButton = new Button("View Details");
-        viewDetailsButton.setOnAction(event -> {
-            System.out.println("View Details clicked for " + title);
-        });
+        viewDetailsButton.setOnAction(event -> handleViewDetails(new ActionEvent()));
 
         eventCard.getChildren().addAll(imageView, titleLabel, categoryLabel, descriptionLabel, viewDetailsButton);
         return eventCard;
@@ -131,5 +137,37 @@ public class UserDashboardController {
 
         Stage currentStage = (Stage) logoutButton.getScene().getWindow();
         currentStage.close();
+    }
+
+    public void handleCartClick(ActionEvent actionEvent) {
+        System.out.println("Cart button clicked.");
+    }
+
+    private java.util.List<MockEvent> getMockEvents() {
+        java.util.List<MockEvent> events = new java.util.ArrayList<>();
+        events.add(new MockEvent("Musical Night", "Musicals", "A fantastic evening of music.", "https://via.placeholder.com/200x150.png?text=Musical+Night"));
+        events.add(new MockEvent("Rock Concert", "Concerts", "Loud guitars and bright lights.", "https://via.placeholder.com/200x150.png?text=Rock+Concert"));
+        events.add(new MockEvent("Boxing Match", "Fights", "High-energy title fight.", "https://via.placeholder.com/200x150.png?text=Boxing+Match"));
+        events.add(new MockEvent("Shakespeare Play", "Theater", "Classic drama on stage.", "https://via.placeholder.com/200x150.png?text=Shakespeare+Play"));
+        return events;
+    }
+
+    private static class MockEvent {
+        private final String title;
+        private final String category;
+        private final String description;
+        private final String imageUrl;
+
+        MockEvent(String title, String category, String description, String imageUrl) {
+            this.title = title;
+            this.category = category;
+            this.description = description;
+            this.imageUrl = imageUrl;
+        }
+
+        public String getTitle() { return title; }
+        public String getCategory() { return category; }
+        public String getDescription() { return description; }
+        public String getImageUrl() { return imageUrl; }
     }
 }
