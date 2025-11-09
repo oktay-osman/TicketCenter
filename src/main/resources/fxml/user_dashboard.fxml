@@ -46,7 +46,8 @@
             <Region HBox.hgrow="ALWAYS" />
 
             <Label fx:id="greetingLabel" text="Hello, {first_name}" />
-            <Button fx:id="logoutButton" text="Logout" onAction="#handleLogout" styleClass="button"/>
+            <Button fx:id="cartButton" text="🛒 Cart (0)" onAction="#handleCartClick" styleClass="button"/>
+            <Button fx:id="logoutButton" text="Logout" onAction="#handleLogout" styleClass="button-logout"/>
         </HBox>
     </top>
 
@@ -62,46 +63,7 @@
                     <Label text="Upcoming Events" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;"/>
 
                     <TilePane fx:id="eventsTilePane" hgap="20" vgap="20" prefColumns="3">
-
-                        <!-- Hardcoded Event Card 1 -->
-                        <VBox spacing="10" styleClass="event-card">
-                            <ImageView fitWidth="200" fitHeight="150" preserveRatio="true">
-                                <image>
-                                    <Image url="@/images/sample_event1.jpg"/>
-                                </image>
-                            </ImageView>
-                            <Label text="Concert Night" styleClass="event-name"/>
-                            <Label text="June 25, 2025 | 8:00 PM" styleClass="event-date"/>
-                            <Label text="Concert" styleClass="event-genre"/>
-                            <Button text="View Details" onAction="#handleViewDetails" styleClass="button"/>
-                        </VBox>
-
-                        <!-- Hardcoded Event Card 2 -->
-                        <VBox spacing="10" styleClass="event-card">
-                            <ImageView fitWidth="200" fitHeight="150" preserveRatio="true">
-                                <image>
-                                    <Image url="@../images/sample_event2.jpg"/>
-                                </image>
-                            </ImageView>
-                            <Label text="Broadway Musical" styleClass="event-name"/>
-                            <Label text="July 10, 2025 | 7:30 PM" styleClass="event-date"/>
-                            <Label text="Musical" styleClass="event-genre"/>
-                            <Button text="View Details" onAction="#handleViewDetails" styleClass="button"/>
-                        </VBox>
-
-                        <!-- Hardcoded Event Card 3 -->
-                        <VBox spacing="10" styleClass="event-card">
-                            <ImageView fitWidth="200" fitHeight="150" preserveRatio="true">
-                                <image>
-                                    <Image url="@/images/sample_event3.jpg"/>
-                                </image>
-                            </ImageView>
-                            <Label text="Boxing Championship" styleClass="event-name"/>
-                            <Label text="August 5, 2025 | 6:00 PM" styleClass="event-date"/>
-                            <Label text="Fights" styleClass="event-genre"/>
-                            <Button text="View Details" onAction="#handleViewDetails" styleClass="button"/>
-                        </VBox>
-
+                        <!-- Event cards will be dynamically generated from the controller at runtime -->
                     </TilePane>
                 </VBox>
             </content>
