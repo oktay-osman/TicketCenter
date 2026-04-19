@@ -86,6 +86,8 @@ public class LoginController {
         } catch (Exception e) {
             System.out.println("Error loading logo: " + e.getMessage());
         }
+        enterPasswordField.setOnAction(event -> loginButtonOnAction());
+        usernameTextField.setOnAction(event -> loginButtonOnAction());
     }
 
     private String getFxmlFileBasedOnRole(String roleName) {
