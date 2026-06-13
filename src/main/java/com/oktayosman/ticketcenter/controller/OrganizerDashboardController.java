@@ -4,8 +4,9 @@ import com.oktayosman.ticketcenter.model.Event;
 import com.oktayosman.ticketcenter.model.EventCategory;
 import com.oktayosman.ticketcenter.model.EventStatus;
 import com.oktayosman.ticketcenter.model.Organizer;
+import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.service.EventService;
-import com.oktayosman.ticketcenter.repository.UserRepository;
+import com.oktayosman.ticketcenter.repository.OrganizerRepository;
 import com.oktayosman.ticketcenter.util.SessionManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -42,7 +43,7 @@ public class OrganizerDashboardController {
     private EventService eventService;
 
     @Autowired
-    private UserRepository userRepository;
+    private OrganizerRepository organizerRepository;
 
     @Autowired
     private com.oktayosman.ticketcenter.service.OrganizerService organizerService;
@@ -118,14 +119,13 @@ public class OrganizerDashboardController {
             if (date == null) throw new IllegalArgumentException("Event date is required");
 
             // Ensure an organizer is logged in; try to resolve Organizer entity from session
-            var user = SessionManager.getCurrentUser();
-            Organizer organizer = null;
-            if (user instanceof Organizer) {
-                organizer = (Organizer) user;
-            } else if (user != null) {
-                // try to reload from repository and cast
-                organizer = userRepository.findById(user.getId()).filter(u -> u instanceof Organizer).map(u -> (Organizer) u).orElse(null);
+            User user = SessionManager.getCurrentUser();
+            if (user == null) {
+                throw new IllegalStateException("No user is logged in.");
             }
+
+            // Find organizer by user ID
+            Organizer organizer = organizerRepository.findById(user.getId()).orElse(null);
 
             if (organizer == null) {
                 throw new IllegalStateException("Only organizers can create events. No organizer is logged in.");
