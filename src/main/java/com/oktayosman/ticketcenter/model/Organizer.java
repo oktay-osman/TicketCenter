@@ -3,18 +3,50 @@ package com.oktayosman.ticketcenter.model;
 import jakarta.persistence.*;
 
 @Entity
-@PrimaryKeyJoinColumn(name = "user_id")
 @Table(name = "organizers")
-public class Organizer extends User {
+public class Organizer {
 
-    @Column(nullable = false)
+    @Id
+    private Long userId;
+
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "user_id")
+    private User user;
+
     private String organizationName;
 
-    public Organizer() {}
+    private Double commission;
 
-    public Organizer(String firstName, String lastName, String email, String username, String password, Role role, String organizationName) {
-        super(firstName, lastName, email, username, password, role);
+    public Organizer() {
+    }
+
+    public Organizer(User user, String organizationName, Double commission) {
+        this.user = user;
+        this.userId = user.getId();
         this.organizationName = organizationName;
+        this.commission = commission;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public Long getId() {
+        return userId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+        this.userId = user.getId();
     }
 
     public String getOrganizationName() {
@@ -23,5 +55,13 @@ public class Organizer extends User {
 
     public void setOrganizationName(String organizationName) {
         this.organizationName = organizationName;
+    }
+
+    public Double getCommission() {
+        return commission;
+    }
+
+    public void setCommission(Double commission) {
+        this.commission = commission;
     }
 }
