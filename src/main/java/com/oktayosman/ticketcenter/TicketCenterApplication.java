@@ -56,9 +56,6 @@ public class TicketCenterApplication extends Application {
 
     public static void main(String[] args) {
         logger.info("Launching TicketCenter Application");
-        SpringApplicationBuilder builder = new SpringApplicationBuilder(TicketCenterApplication.class);
-        builder.run(args);
-        logger.info("TicketCenter Application launched successfully");
         launch(args);
     }
 }
