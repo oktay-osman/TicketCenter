@@ -16,9 +16,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.geometry.Pos;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Controller;
 
@@ -138,10 +141,11 @@ public class UserDashboardController {
     }
 
     private VBox createEventCard(Event event) {
-        // Card container with fixed width for consistent layout
+        // Card container with fixed width and height for consistent layout
         VBox eventCard = new VBox(8);
-        eventCard.setAlignment(Pos.TOP_CENTER);
+        eventCard.setAlignment(Pos.TOP_LEFT);
         eventCard.setPrefWidth(240);
+        eventCard.setPrefHeight(360);
         eventCard.setStyle("-fx-padding: 10; -fx-border-color: #ddd; -fx-background-color: #fff; -fx-border-radius: 6; -fx-background-radius: 6;");
 
         // Image (thumbnail)
@@ -167,15 +171,17 @@ public class UserDashboardController {
         titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         titleLabel.setWrapText(true);
         titleLabel.setMaxWidth(220);
+        titleLabel.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
         // Category / meta
         String categoryStr = event.getCategory() != null ? event.getCategory().toString() : "Unknown";
         Label categoryLabel = new Label(categoryStr);
         categoryLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
 
-        // Short description
-        String desc = event.getDescription() != null ? event.getDescription() : "No description available";
-        Label descriptionLabel = new Label(desc);
+        // Short description (preview)
+        String fullDesc = event.getDescription() != null ? event.getDescription() : "No description available";
+        String descPreview = fullDesc.length() > 120 ? fullDesc.substring(0, 117).trim() + "..." : fullDesc;
+        Label descriptionLabel = new Label(descPreview);
         descriptionLabel.setWrapText(true);
         descriptionLabel.setMaxWidth(220);
         descriptionLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #444;");
@@ -185,7 +191,16 @@ public class UserDashboardController {
         viewDetailsButton.setPrefWidth(200);
         viewDetailsButton.setOnAction(e -> openEventDetails(event));
 
-        eventCard.getChildren().addAll(imageView, titleLabel, categoryLabel, descriptionLabel, viewDetailsButton);
+        // Wrap button in HBox to center it
+        HBox buttonContainer = new HBox();
+        buttonContainer.setAlignment(Pos.CENTER);
+        buttonContainer.getChildren().add(viewDetailsButton);
+
+        // Spacer to push the button to the bottom so all cards align
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        eventCard.getChildren().addAll(imageView, titleLabel, categoryLabel, descriptionLabel, spacer, buttonContainer);
         return eventCard;
     }
 
