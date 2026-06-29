@@ -3,78 +3,103 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane prefHeight="500.0" prefWidth="850.0"
+<BorderPane prefHeight="650.0" prefWidth="850.0"
             xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.oktayosman.ticketcenter.controller.OrganizerDashboardController"
             stylesheets="@../styles.css">
 
-    <!-- LEFT SIDEBAR -->
-    <left>
-        <VBox alignment="CENTER" spacing="15" style="-fx-background-color: #2c3e50; -fx-padding: 20;">
-            <Label text="Organizer Panel" style="-fx-text-fill: white; -fx-font-size: 18px;"/>
+    <!-- TOP BAR (title + logout) -->
+    <top>
+        <HBox spacing="10" style="-fx-padding: 10; -fx-alignment: CENTER_LEFT;">
+            <Label text="Organizer Dashboard" style="-fx-text-fill: #2c3e50; -fx-font-size: 24px; -fx-font-weight: bold;"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button fx:id="logoutButton" text="Logout" />
+        </HBox>
+    </top>
 
-            <Button text="Create Event" fx:id="createEventTabBtn"/>
-            <Button text="My Events" fx:id="myEventsTabBtn"/>
-        </VBox>
-    </left>
-
-    <!-- CENTER FORM -->
+    <!-- CENTER TABS -->
     <center>
-        <ScrollPane fitToWidth="true">
-            <GridPane fx:id="formGrid"
-                      hgap="10" vgap="10"
-                      style="-fx-padding: 30;">
+        <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
+            <!-- CREATE EVENT TAB -->
+            <Tab text="Create Event">
+                <ScrollPane fitToWidth="true">
+                    <GridPane hgap="10" vgap="10" style="-fx-padding: 30;">
 
-                <Label text="Create Event" GridPane.rowIndex="0" GridPane.columnSpan="2"
-                       style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+                        <Label text="Create Event" GridPane.rowIndex="0" GridPane.columnSpan="2"
+                               style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
 
-                <!-- Name -->
-                <Label text="Name:" GridPane.rowIndex="1"/>
-                <TextField fx:id="nameField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                        <!-- Name -->
+                        <Label text="Name:" GridPane.rowIndex="1"/>
+                        <TextField fx:id="nameField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-                <!-- Category -->
-                <Label text="Category:" GridPane.rowIndex="2"/>
-                <ComboBox fx:id="categoryCombo" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                        <!-- Category -->
+                        <Label text="Category:" GridPane.rowIndex="2"/>
+                        <ComboBox fx:id="categoryCombo" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
-                <!-- Ticket limit per person -->
-                <Label text="Ticket limit:" GridPane.rowIndex="3"/>
-                <TextField fx:id="ticketLimitField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                        <!-- Ticket limit per person -->
+                        <Label text="Ticket limit:" GridPane.rowIndex="3"/>
+                        <TextField fx:id="ticketLimitField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
-                <!-- Event date -->
-                <Label text="Event date:" GridPane.rowIndex="4"/>
-                <DatePicker fx:id="eventDatePicker" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                        <!-- Event date -->
+                        <Label text="Event date:" GridPane.rowIndex="4"/>
+                        <DatePicker fx:id="eventDatePicker" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
 
-                <!-- Location -->
-                <Label text="Location:" GridPane.rowIndex="5"/>
-                <TextField fx:id="locationField" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+                        <!-- Location -->
+                        <Label text="Location:" GridPane.rowIndex="5"/>
+                        <TextField fx:id="locationField" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
 
-                <!-- Description -->
-                <Label text="Description:" GridPane.rowIndex="6"/>
-                <TextArea fx:id="descriptionArea" prefRowCount="4"
-                          GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+                        <!-- Description -->
+                        <Label text="Description:" GridPane.rowIndex="6"/>
+                        <TextArea fx:id="descriptionArea" prefRowCount="4"
+                                  GridPane.rowIndex="6" GridPane.columnIndex="1"/>
 
-                <!-- Status -->
-                <Label text="Status:" GridPane.rowIndex="7"/>
-                <ComboBox fx:id="statusCombo" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+                        <!-- Status -->
+                        <Label text="Status:" GridPane.rowIndex="7"/>
+                        <ComboBox fx:id="statusCombo" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
 
-                <!-- Capacity -->
-                <Label text="Capacity:" GridPane.rowIndex="8"/>
-                <TextField fx:id="capacityField" GridPane.rowIndex="8" GridPane.columnIndex="1"/>
+                        <!-- Capacity -->
+                        <Label text="Capacity:" GridPane.rowIndex="8"/>
+                        <TextField fx:id="capacityField" GridPane.rowIndex="8" GridPane.columnIndex="1"/>
 
-                <!-- Image -->
-                <Label text="Image:" GridPane.rowIndex="9"/>
-                <HBox spacing="10" GridPane.rowIndex="9" GridPane.columnIndex="1">
-                    <Button text="Choose File" fx:id="imageButton"/>
-                    <Label fx:id="imageLabel" text="No file selected"/>
-                </HBox>
+                        <!-- Image -->
+                        <Label text="Image:" GridPane.rowIndex="9"/>
+                        <HBox spacing="10" GridPane.rowIndex="9" GridPane.columnIndex="1">
+                            <Button text="Choose File" fx:id="imageButton"/>
+                            <Label fx:id="imageLabel" text="No file selected"/>
+                        </HBox>
 
-                <!-- Submit -->
-                <Button text="Create Event"
-                        fx:id="submitButton"
-                        GridPane.rowIndex="10"
-                        GridPane.columnIndex="1"/>
-            </GridPane>
-        </ScrollPane>
+                        <!-- Submit -->
+                        <Button text="Create Event"
+                                fx:id="submitButton"
+                                GridPane.rowIndex="10"
+                                GridPane.columnIndex="1"/>
+                    </GridPane>
+                </ScrollPane>
+            </Tab>
+
+            <!-- MY EVENTS TAB -->
+            <Tab text="My Events">
+                <VBox spacing="15" style="-fx-padding: 20;">
+                    <Label text="Your Events" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                    <HBox spacing="8">
+                        <Button text="Refresh" fx:id="refreshButton"/>
+                        <Button text="Edit Selected" fx:id="editButton"/>
+                        <Button text="Delete Selected" fx:id="deleteButton"/>
+                    </HBox>
+                    <TableView fx:id="eventsTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn text="Event Name" prefWidth="150" fx:id="nameColumn"/>
+                            <TableColumn text="Category" prefWidth="100" fx:id="categoryColumn"/>
+                            <TableColumn text="Location" prefWidth="150" fx:id="locationColumn"/>
+                            <TableColumn text="Event Date" prefWidth="150" fx:id="dateColumn"/>
+                            <TableColumn text="Status" prefWidth="100" fx:id="statusColumn"/>
+                            <TableColumn text="Capacity" prefWidth="80" fx:id="capacityColumn"/>
+                            <TableColumn text="Updated At" prefWidth="150" fx:id="updatedAtColumn"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+        </TabPane>
     </center>
 
 </BorderPane>

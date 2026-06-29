@@ -24,4 +24,36 @@ public class EventService {
         event.setOrganizer(organizer);
         return eventRepository.save(event);
     }
+
+    public Event updateEvent(Long id, Event updatedEvent, Organizer organizer) {
+        Event existing = eventRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+
+        // update fields
+        existing.setName(updatedEvent.getName());
+        existing.setCategory(updatedEvent.getCategory());
+        existing.setTicketLimit(updatedEvent.getTicketLimit());
+        existing.setEventDate(updatedEvent.getEventDate());
+        existing.setLocation(updatedEvent.getLocation());
+        existing.setDescription(updatedEvent.getDescription());
+        existing.setStatus(updatedEvent.getStatus());
+        existing.setCapacity(updatedEvent.getCapacity());
+        // Only overwrite image path when an updated image was provided. If null, keep existing image.
+        if (updatedEvent.getImagePath() != null && !updatedEvent.getImagePath().isBlank()) {
+            existing.setImagePath(updatedEvent.getImagePath());
+        }
+        if (updatedEvent.getOrganizerLegacyId() != null) {
+            existing.setOrganizerLegacyId(updatedEvent.getOrganizerLegacyId());
+        }
+
+        existing.setOrganizer(organizer);
+        return eventRepository.save(existing);
+    }
+
+    public void deleteEventById(Long id) {
+        eventRepository.deleteById(id);
+    }
+
+    public List<Event> getEventsByOrganizer(Organizer organizer) {
+        return eventRepository.findByOrganizer(organizer);
+    }
 }
