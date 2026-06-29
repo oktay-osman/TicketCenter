@@ -34,10 +34,10 @@
                 <items>
                     <FXCollections fx:factory="observableArrayList">
                         <String fx:value="All"/>
-                        <String fx:value="Musicals"/>
-                        <String fx:value="Concerts"/>
-                        <String fx:value="Fights"/>
-                        <String fx:value="Theater"/>
+                        <String fx:value="MUSICALS"/>
+                        <String fx:value="CONCERTS"/>
+                        <String fx:value="THEATER"/>
+                        <String fx:value="FIGHT"/>
                     </FXCollections>
                 </items>
             </ComboBox>

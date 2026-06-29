@@ -1,6 +1,9 @@
 package com.oktayosman.ticketcenter.controller;
 
+import com.oktayosman.ticketcenter.model.Event;
+import com.oktayosman.ticketcenter.model.EventCategory;
 import com.oktayosman.ticketcenter.model.User;
+import com.oktayosman.ticketcenter.service.EventService;
 import com.oktayosman.ticketcenter.util.SessionManager;
 import com.oktayosman.ticketcenter.util.SpringContext;
 import javafx.event.ActionEvent;
@@ -20,6 +23,7 @@ import javafx.stage.Stage;
 import org.springframework.stereotype.Controller;
 
 import java.io.IOException;
+import java.util.List;
 
 @Controller
 public class UserDashboardController {
@@ -40,6 +44,12 @@ public class UserDashboardController {
     @FXML
     private Button logoutButton;
 
+    private final EventService eventService;
+
+    public UserDashboardController(EventService eventService) {
+        this.eventService = eventService;
+    }
+
     @FXML
     public void initialize() {
         User currentUser = SessionManager.getCurrentUser();
@@ -54,24 +64,31 @@ public class UserDashboardController {
     @FXML
     private void handleFilterAction() {
         String searchQuery = searchField.getText().trim().toLowerCase();
-        String selectedGenre = genreFilter.getValue().trim().toLowerCase();
+        String selectedGenre = genreFilter.getValue();
+        if (selectedGenre == null) {
+            selectedGenre = "All";
+        }
+        selectedGenre = selectedGenre.trim().toLowerCase();
 
         eventsTilePane.getChildren().clear();
-        if (searchQuery.isEmpty() && (selectedGenre.isEmpty() || selectedGenre.equals("all"))) {
+        if (searchQuery.isEmpty() && selectedGenre.isEmpty() || selectedGenre.equals("all")) {
             loadEvents();
         } else {
-            loadFilteredPlaceholderEvents(searchQuery, selectedGenre);
+            loadFilteredEvents(searchQuery, selectedGenre);
         }
     }
 
-    private void loadFilteredPlaceholderEvents(String searchQuery, String selectedGenre) {
+    private void loadFilteredEvents(String searchQuery, String selectedGenre) {
         eventsTilePane.getChildren().clear();
-        for (MockEvent e : getMockEvents()) {
-            boolean matchesSearch = searchQuery.isEmpty() || e.getTitle().toLowerCase().contains(searchQuery);
-            boolean matchesGenre = (selectedGenre == null || selectedGenre.equalsIgnoreCase("All")
-                    || e.getCategory().equalsIgnoreCase(selectedGenre));
+        List<Event> allEvents = eventService.getAllEvents();
+        for (Event event : allEvents) {
+            boolean matchesSearch = searchQuery.isEmpty() || event.getName().toLowerCase().contains(searchQuery)
+                    || event.getDescription().toLowerCase().contains(searchQuery);
+            String eventCategoryStr = event.getCategory() != null ? event.getCategory().toString().toLowerCase() : "";
+            boolean matchesGenre = selectedGenre.isEmpty() || selectedGenre.equals("all")
+                    || eventCategoryStr.equals(selectedGenre);
             if (matchesSearch && matchesGenre) {
-                VBox eventCard = createEventCard(e.getTitle(), e.getCategory(), e.getDescription(), e.getImageUrl());
+                VBox eventCard = createEventCard(event);
                 eventsTilePane.getChildren().add(eventCard);
             }
         }
@@ -79,19 +96,30 @@ public class UserDashboardController {
 
     private void loadEvents() {
         eventsTilePane.getChildren().clear();
-        for (MockEvent e : getMockEvents()) {
-            VBox eventCard = createEventCard(e.getTitle(), e.getCategory(), e.getDescription(), e.getImageUrl());
+        List<Event> events = eventService.getAllEvents();
+        for (Event event : events) {
+            VBox eventCard = createEventCard(event);
             eventsTilePane.getChildren().add(eventCard);
         }
     }
 
-    private VBox createEventCard(String title, String category, String description, String imageUrl) {
+    private VBox createEventCard(Event event) {
         VBox eventCard = new VBox(10);
         eventCard.setStyle("-fx-padding: 10; -fx-border-color: #ccc; -fx-background-color: #f9f9f9; -fx-border-radius: 5; -fx-background-radius: 5;");
 
         ImageView imageView;
         try {
-            imageView = new ImageView(new Image(imageUrl, 200, 150, true, true));
+            String imagePath = event.getImagePath();
+            if (imagePath != null && !imagePath.isEmpty()) {
+                // Handle both file URLs and HTTP URLs
+                if (!imagePath.startsWith("http")) {
+                    imagePath = "file://" + imagePath;
+                }
+                imageView = new ImageView(new Image(imagePath, 200, 150, true, true));
+            } else {
+                // Use a placeholder image
+                imageView = new ImageView(new Image("https://via.placeholder.com/200x150.png?text=Event+Image", 200, 150, true, true));
+            }
         } catch (Exception ex) {
             imageView = new ImageView();
             imageView.setFitWidth(200);
@@ -99,17 +127,18 @@ public class UserDashboardController {
             imageView.setPreserveRatio(true);
         }
 
-        Label titleLabel = new Label(title);
+        Label titleLabel = new Label(event.getName());
         titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
-        Label categoryLabel = new Label(category);
+        String categoryStr = event.getCategory() != null ? event.getCategory().toString() : "Unknown";
+        Label categoryLabel = new Label(categoryStr);
         categoryLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #555;");
 
-        Label descriptionLabel = new Label(description);
+        Label descriptionLabel = new Label(event.getDescription() != null ? event.getDescription() : "No description available");
         descriptionLabel.setWrapText(true);
 
         Button viewDetailsButton = new Button("View Details");
-        viewDetailsButton.setOnAction(event -> handleViewDetails(new ActionEvent()));
+        viewDetailsButton.setOnAction(actionEvent -> handleViewDetails(new ActionEvent()));
 
         eventCard.getChildren().addAll(imageView, titleLabel, categoryLabel, descriptionLabel, viewDetailsButton);
         return eventCard;
@@ -141,33 +170,5 @@ public class UserDashboardController {
 
     public void handleCartClick(ActionEvent actionEvent) {
         System.out.println("Cart button clicked.");
-    }
-
-    private java.util.List<MockEvent> getMockEvents() {
-        java.util.List<MockEvent> events = new java.util.ArrayList<>();
-        events.add(new MockEvent("Musical Night", "Musicals", "A fantastic evening of music.", "https://via.placeholder.com/200x150.png?text=Musical+Night"));
-        events.add(new MockEvent("Rock Concert", "Concerts", "Loud guitars and bright lights.", "https://via.placeholder.com/200x150.png?text=Rock+Concert"));
-        events.add(new MockEvent("Boxing Match", "Fights", "High-energy title fight.", "https://via.placeholder.com/200x150.png?text=Boxing+Match"));
-        events.add(new MockEvent("Shakespeare Play", "Theater", "Classic drama on stage.", "https://via.placeholder.com/200x150.png?text=Shakespeare+Play"));
-        return events;
-    }
-
-    private static class MockEvent {
-        private final String title;
-        private final String category;
-        private final String description;
-        private final String imageUrl;
-
-        MockEvent(String title, String category, String description, String imageUrl) {
-            this.title = title;
-            this.category = category;
-            this.description = description;
-            this.imageUrl = imageUrl;
-        }
-
-        public String getTitle() { return title; }
-        public String getCategory() { return category; }
-        public String getDescription() { return description; }
-        public String getImageUrl() { return imageUrl; }
     }
 }
