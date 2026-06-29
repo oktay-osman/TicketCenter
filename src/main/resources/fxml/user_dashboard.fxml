@@ -6,15 +6,11 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.collections.FXCollections?>
-<?import java.lang.String?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/21"
             fx:controller="com.oktayosman.ticketcenter.controller.UserDashboardController"
@@ -30,18 +26,7 @@
             <Label text="Search:"/>
             <TextField fx:id="searchField" promptText="Search events..." HBox.hgrow="ALWAYS"/>
             <Label text="Genre:"/>
-            <ComboBox fx:id="genreFilter" promptText="All Genres">
-                <items>
-                    <FXCollections fx:factory="observableArrayList">
-                        <String fx:value="All"/>
-                        <String fx:value="MUSICALS"/>
-                        <String fx:value="CONCERTS"/>
-                        <String fx:value="THEATER"/>
-                        <String fx:value="FIGHT"/>
-                    </FXCollections>
-                </items>
-            </ComboBox>
-            <Button text="Filter" onAction="#handleFilterAction" styleClass="button"/>
+            <ComboBox fx:id="genreFilter" promptText="All Genres"/>
 
             <Region HBox.hgrow="ALWAYS" />
 
