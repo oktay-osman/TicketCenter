@@ -44,6 +44,9 @@ public class Event {
     @Column(name = "image_url", length = 255)
     private String imagePath;
 
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<SeatType> seatTypes;
+
     @Column(name = "organizer_id", nullable = false)
     private Integer organizerLegacyId;
 
@@ -121,6 +124,14 @@ public class Event {
 
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    public List<SeatType> getSeatTypes() {
+        return seatTypes;
+    }
+
+    public void setSeatTypes(List<SeatType> seatTypes) {
+        this.seatTypes = seatTypes;
     }
 
     public void setTicketLimit(int ticketLimit) {
