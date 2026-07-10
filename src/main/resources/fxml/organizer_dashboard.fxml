@@ -68,10 +68,21 @@
                             <Label fx:id="imageLabel" text="No file selected"/>
                         </HBox>
 
+                        <!-- Ticket Pricing -->
+                        <Label text="Ticket Types:" GridPane.rowIndex="10"/>
+                        <VBox fx:id="ticketTypesContainer" GridPane.rowIndex="10" GridPane.columnIndex="1" spacing="8">
+                            <HBox spacing="8">
+                                <Button text="Add Ticket Type" fx:id="addTicketTypeButton"/>
+                            </HBox>
+                            <VBox fx:id="ticketTypesEntriesBox" spacing="6">
+                                <Label text="No ticket types added" fx:id="noTicketTypesLabel"/>
+                            </VBox>
+                        </VBox>
+
                         <!-- Submit -->
                         <Button text="Create Event"
                                 fx:id="submitButton"
-                                GridPane.rowIndex="10"
+                                GridPane.rowIndex="11"
                                 GridPane.columnIndex="1"/>
                     </GridPane>
                 </ScrollPane>

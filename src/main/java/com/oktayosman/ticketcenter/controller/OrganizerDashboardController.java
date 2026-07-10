@@ -5,6 +5,8 @@ import com.oktayosman.ticketcenter.model.EventCategory;
 import com.oktayosman.ticketcenter.model.EventStatus;
 import com.oktayosman.ticketcenter.model.Organizer;
 import com.oktayosman.ticketcenter.model.User;
+import com.oktayosman.ticketcenter.model.SeatType;
+import com.oktayosman.ticketcenter.model.SeatCategory;
 import com.oktayosman.ticketcenter.service.EventService;
 import com.oktayosman.ticketcenter.repository.OrganizerRepository;
 import com.oktayosman.ticketcenter.util.SessionManager;
@@ -12,6 +14,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.Node;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.fxml.FXMLLoader;
@@ -31,6 +36,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 
 @Controller
 public class OrganizerDashboardController {
@@ -47,6 +54,12 @@ public class OrganizerDashboardController {
     @FXML private Button imageButton;
     @FXML private Label imageLabel;
     @FXML private Button submitButton;
+
+    // Ticket types UI
+    @FXML private VBox ticketTypesContainer;
+    @FXML private VBox ticketTypesEntriesBox;
+    @FXML private Button addTicketTypeButton;
+    @FXML private Label noTicketTypesLabel;
 
     // MY EVENTS TAB
     @FXML private TabPane mainTabPane;
@@ -103,6 +116,10 @@ public class OrganizerDashboardController {
         });
 
         submitButton.setOnAction(e -> handleCreateEvent());
+
+        // Setup ticket types UI
+        addTicketTypeButton.setOnAction(e -> addTicketTypeRow(null, null, null));
+        updateNoTicketTypesLabel();
 
         editButton.setOnAction(e -> handleEditSelected());
         deleteButton.setOnAction(e -> handleDeleteSelected());
@@ -227,6 +244,54 @@ public class OrganizerDashboardController {
                 }
             }
 
+            // Validate and collect seat types
+            List<SeatType> seatTypesList = new ArrayList<>();
+            if (ticketTypesEntriesBox != null) {
+                for (Node child : ticketTypesEntriesBox.getChildren()) {
+                    if (child == noTicketTypesLabel) continue;
+                    if (child instanceof HBox) {
+                        List<Node> rowChildren = ((HBox) child).getChildren();
+                        if (rowChildren.size() >= 3 && rowChildren.get(0) instanceof ComboBox && rowChildren.get(1) instanceof TextField && rowChildren.get(2) instanceof TextField) {
+                            SeatCategory seatCat = (SeatCategory) ((ComboBox<?>) rowChildren.get(0)).getValue();
+                            String priceStr = ((TextField) rowChildren.get(1)).getText();
+                            String totalStr = ((TextField) rowChildren.get(2)).getText();
+
+                            if (seatCat == null) {
+                                errors.append("• Seat type category is required\n");
+                            }
+                            if (priceStr == null || priceStr.isBlank()) {
+                                errors.append("• Seat type price is required\n");
+                            }
+                            if (totalStr == null || totalStr.isBlank()) {
+                                errors.append("• Total seats is required for seat type\n");
+                            }
+
+                            if (seatCat != null && priceStr != null && !priceStr.isBlank() && totalStr != null && !totalStr.isBlank()) {
+                                try {
+                                    BigDecimal price = new BigDecimal(priceStr);
+                                    if (price.compareTo(BigDecimal.ZERO) < 0) {
+                                        errors.append("• Price must be non-negative for ").append(seatCat.getDisplayName()).append("\n");
+                                    } else {
+                                        Integer totalSeats = Integer.parseInt(totalStr);
+                                        if (totalSeats < 0) {
+                                            errors.append("• Total seats must be non-negative for ").append(seatCat.getDisplayName()).append("\n");
+                                        } else {
+                                            SeatType st = new SeatType();
+                                            st.setSeatCategory(seatCat);
+                                            st.setPrice(price);
+                                            st.setTotalSeats(totalSeats);
+                                            seatTypesList.add(st);
+                                        }
+                                    }
+                                } catch (NumberFormatException ex) {
+                                    errors.append("• Invalid price or total seats for ").append(seatCat.getDisplayName()).append("\n");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             if (!errors.isEmpty()) {
                 showError("Please fill in all required fields:\n\n" + errors);
                 return;
@@ -278,6 +343,14 @@ public class OrganizerDashboardController {
             event.setStatus(status);
             event.setCapacity(capacity);
             event.setImagePath(imagePath);
+
+            // Attach seat types to event
+            if (!seatTypesList.isEmpty()) {
+                for (SeatType st : seatTypesList) {
+                    st.setEvent(event);
+                }
+                event.setSeatTypes(seatTypesList);
+            }
 
             System.out.println("[DEBUG] current session user id=" + user.getId() + " class=" + user.getClass().getName());
             System.out.println("[DEBUG] resolved organizer id=" + organizer.getId() + " class=" + organizer.getClass().getName());
@@ -331,6 +404,13 @@ public class OrganizerDashboardController {
         capacityField.clear();
         imageLabel.setText("No file selected");
         selectedImage = null;
+        // Clear seat types
+        if (ticketTypesEntriesBox != null) {
+            ticketTypesEntriesBox.getChildren().clear();
+            updateNoTicketTypesLabel();
+        }
+        editingEventId = null;
+        submitButton.setText("Create Event");
     }
 
     private void handleEditSelected() {
@@ -354,6 +434,16 @@ public class OrganizerDashboardController {
         statusCombo.setValue(selected.getStatus());
         capacityField.setText(String.valueOf(selected.getCapacity()));
         imageLabel.setText(selected.getImagePath() != null ? java.nio.file.Paths.get(selected.getImagePath()).getFileName().toString() : "No file selected");
+
+        // Populate seat types if any
+        ticketTypesEntriesBox.getChildren().clear();
+        if (selected.getSeatTypes() != null && !selected.getSeatTypes().isEmpty()) {
+            for (SeatType st : selected.getSeatTypes()) {
+                addTicketTypeRow(st.getSeatCategory(), st.getPrice() != null ? st.getPrice().toString() : null, st.getTotalSeats() != null ? st.getTotalSeats().toString() : null);
+            }
+        } else {
+            updateNoTicketTypesLabel();
+        }
 
         // set editing state and switch to create tab
         editingEventId = selected.getId();
@@ -400,6 +490,56 @@ public class OrganizerDashboardController {
             stage.show();
         } catch (IOException e) {
             showError("Failed to load login screen: " + e.getMessage());
+        }
+    }
+
+    private void addTicketTypeRow(SeatCategory category, String price, String totalSeats) {
+        if (ticketTypesEntriesBox == null) return;
+        ticketTypesEntriesBox.getChildren().remove(noTicketTypesLabel);
+
+        HBox row = new HBox(8);
+        row.setStyle("-fx-padding: 5; -fx-border-color: #ddd; -fx-background-color: #f5f5f5;");
+
+        ComboBox<SeatCategory> categoryCombo = new ComboBox<>();
+        categoryCombo.getItems().setAll(SeatCategory.values());
+        categoryCombo.setStyle("-fx-min-width: 120;");
+        if (category != null) {
+            categoryCombo.setValue(category);
+        } else {
+            categoryCombo.getSelectionModel().selectFirst();
+        }
+
+        TextField priceField = new TextField();
+        priceField.setPromptText("Price");
+        priceField.setPrefWidth(100);
+        if (price != null) priceField.setText(price);
+
+        TextField totalSeatsField = new TextField();
+        totalSeatsField.setPromptText("Total Seats");
+        totalSeatsField.setPrefWidth(100);
+        if (totalSeats != null) totalSeatsField.setText(totalSeats);
+
+        Button removeBtn = new Button("Remove");
+        removeBtn.setStyle("-fx-padding: 5;");
+        removeBtn.setOnAction(e -> {
+            ticketTypesEntriesBox.getChildren().remove(row);
+            updateNoTicketTypesLabel();
+        });
+
+        row.getChildren().addAll(categoryCombo, priceField, totalSeatsField, removeBtn);
+        ticketTypesEntriesBox.getChildren().add(row);
+        updateNoTicketTypesLabel();
+    }
+
+    private void updateNoTicketTypesLabel() {
+        if (ticketTypesEntriesBox == null) return;
+        boolean hasRows = ticketTypesEntriesBox.getChildren().stream().anyMatch(n -> n != noTicketTypesLabel);
+        if (!hasRows) {
+            if (!ticketTypesEntriesBox.getChildren().contains(noTicketTypesLabel)) {
+                ticketTypesEntriesBox.getChildren().add(noTicketTypesLabel);
+            }
+        } else {
+            ticketTypesEntriesBox.getChildren().remove(noTicketTypesLabel);
         }
     }
 
