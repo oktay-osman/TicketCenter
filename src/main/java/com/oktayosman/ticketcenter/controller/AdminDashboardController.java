@@ -1,27 +1,22 @@
 package com.oktayosman.ticketcenter.controller;
 
-import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.service.AdminDashboardService;
 import com.oktayosman.ticketcenter.util.SessionManager;
 import com.oktayosman.ticketcenter.util.SpringContext;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import javafx.beans.property.SimpleStringProperty;
 
 import java.io.IOException;
-
 
 @Component
 public class AdminDashboardController {
@@ -30,26 +25,11 @@ public class AdminDashboardController {
     @FXML private Label totalEventsLabel;
     @FXML private Label totalTicketsLabel;
     @FXML private Label totalRevenueLabel;
-    @FXML private ListView<String> recentActivityList;
-    @FXML private ListView<String> notificationsList;
-    @FXML private Button markNotificationsReadButton;
-    @FXML private BorderPane mainPane;
-    @FXML private VBox userManagementPanel;
-    @FXML private TableView<User> userTable;
-    @FXML private TableColumn<User, String> usernameColumn;
-    @FXML private TableColumn<User, String> emailColumn;
-    @FXML private TableColumn<User, String> roleColumn;
-    @FXML private TextField searchField;
-    @FXML private Button searchButton;
-    @FXML private Button logoutButton;
-
-    @FXML private VBox usersCard;
-    @FXML private VBox eventsCard;
-    @FXML private VBox ticketsCard;
-    @FXML private VBox revenueCard;
+    @FXML private Label adminLabel;
+    @FXML private StackPane contentHost;
+    @FXML private VBox dashboardOverviewPane;
 
     private final AdminDashboardService adminDashboardService;
-    private ObservableList<User> users = FXCollections.observableArrayList();
 
     @Autowired
     public AdminDashboardController(AdminDashboardService adminDashboardService) {
@@ -59,74 +39,38 @@ public class AdminDashboardController {
     @FXML
     public void initialize() {
         loadDashboardData();
-
-        if (userManagementPanel != null) {
-            userManagementPanel.setVisible(false);
-        }
-
-        if (userTable != null) {
-            usernameColumn.setCellValueFactory(cellData ->
-                    new SimpleStringProperty(cellData.getValue().getUsername()));
-            emailColumn.setCellValueFactory(cellData ->
-                    new SimpleStringProperty(cellData.getValue().getEmail()));
-            roleColumn.setCellValueFactory(cellData ->
-                    new SimpleStringProperty(cellData.getValue().getRole().getName()));
-        }
-
-        if (usersCard != null) {
-            usersCard.setOnMouseClicked(e -> handleManageUsers(null));
-        }
-        if (eventsCard != null) {
-            eventsCard.setOnMouseClicked(e -> handleManageEvents(null));
-        }
-        if (ticketsCard != null) {
-            ticketsCard.setOnMouseClicked(e -> handleViewReports(null));
-        }
-        if (revenueCard != null) {
-            revenueCard.setOnMouseClicked(e -> handleViewReports(null));
-        }
+        showDashboardOverview();
+        String currentUsername = SessionManager.getCurrentUser() != null ? SessionManager.getCurrentUser().getUsername() : "Admin";
+        adminLabel.setText(currentUsername);
     }
 
     private void loadDashboardData() {
-        int totalUsers = adminDashboardService.getTotalUsers();
-        int totalEvents = adminDashboardService.getTotalEvents();
-
-        totalUsersLabel.setText(String.valueOf(totalUsers));
-        totalEventsLabel.setText(String.valueOf(totalEvents));
+        totalUsersLabel.setText(String.valueOf(adminDashboardService.getTotalUsers()));
+        totalEventsLabel.setText(String.valueOf(adminDashboardService.getTotalEvents()));
     }
 
+    private void showDashboardOverview() {
+        contentHost.getChildren().setAll(dashboardOverviewPane);
+    }
+
+    private void showUsersManagement() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin_users.fxml"));
+            loader.setControllerFactory(SpringContext::getBean);
+            Parent usersRoot = loader.load();
+
+            AdminUsersController controller = loader.getController();
+            controller.setOnBackToDashboard(this::showDashboardOverview);
+
+            contentHost.getChildren().setAll(usersRoot);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load admin users view", e);
+        }
+    }
 
     @FXML
     public void handleManageUsers(ActionEvent actionEvent) {
-        if (userManagementPanel != null) {
-            boolean isVisible = userManagementPanel.isVisible();
-            userManagementPanel.setVisible(!isVisible);
-
-            if (!isVisible) {
-                loadUsers();
-            }
-        }
-    }
-
-    private void loadUsers() {
-        users.setAll(adminDashboardService.getAllUsers());
-        userTable.setItems(users);
-    }
-
-    @FXML
-    private void handleSearchUsers() {
-        String searchText = searchField.getText().trim();
-        if (searchText.isEmpty()) {
-            userTable.setItems(users);
-        } else {
-            ObservableList<User> filteredUsers = users.filtered(user ->
-                    user.getUsername().toLowerCase().contains(searchText.toLowerCase()) ||
-                            user.getEmail().toLowerCase().contains(searchText.toLowerCase()) ||
-                            user.getRole().getName().toLowerCase().contains(searchText.toLowerCase()));
-            searchField.clear(
-            );
-            userTable.setItems(filteredUsers);
-        }
+        showUsersManagement();
     }
 
     @FXML
@@ -152,11 +96,11 @@ public class AdminDashboardController {
             loginStage.setScene(new Scene(root));
             loginStage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Failed to load login view", e);
         }
+
         Node source = (Node) actionEvent.getSource();
         Stage currentStage = (Stage) source.getScene().getWindow();
         currentStage.close();
     }
-
 }
