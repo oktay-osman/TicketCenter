@@ -9,7 +9,6 @@ import org.mindrot.jbcrypt.BCrypt;
 import java.time.LocalDateTime;
 
 @Entity
-@Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "users")
 public class User {
 
