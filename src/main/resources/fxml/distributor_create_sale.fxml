@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.oktayosman.ticketcenter.controller.DistributorCreateSaleController"
+            prefWidth="700.0" prefHeight="800.0">
+
+    <top>
+        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 12;">
+            <Label text="Create Ticket Sale" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Close" onAction="#handleClose" style="-fx-padding: 8px 16px;"/>
+        </HBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-padding: 0; -fx-border-color: transparent;">
+            <VBox spacing="16" style="-fx-padding: 16;">
+                
+                <!-- Buyer Information -->
+                <VBox spacing="12" style="-fx-border-color: #e5e5e5; -fx-border-radius: 8; -fx-padding: 16; -fx-background-color: white; -fx-background-radius: 8;">
+                    <Label text="Buyer Information" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                    
+                    <GridPane hgap="12" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                        </columnConstraints>
+                        
+                        <Label text="First Name:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <TextField fx:id="firstNameField" promptText="Buyer first name" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                        
+                        <Label text="Last Name:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <TextField fx:id="lastNameField" promptText="Buyer last name" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                        
+                        <Label text="Email:" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
+                        <TextField fx:id="emailField" promptText="Buyer email address" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
+                    </GridPane>
+                </VBox>
+
+                <Separator/>
+
+                <!-- Event and Ticket Selection -->
+                <VBox spacing="12" style="-fx-border-color: #e5e5e5; -fx-border-radius: 8; -fx-padding: 16; -fx-background-color: white; -fx-background-radius: 8;">
+                    <Label text="Event and Tickets" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                    
+                    <GridPane hgap="12" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="30" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="35" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="35" hgrow="ALWAYS"/>
+                        </columnConstraints>
+                        
+                        <Label text="Event:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="eventComboBox" promptText="Select event" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.columnSpan="2"/>
+                    </GridPane>
+
+                    <!-- Ticket Items Container -->
+                    <VBox fx:id="ticketItemsContainer" spacing="8"/>
+                    
+                    <!-- Add Ticket Button -->
+                    <HBox spacing="10">
+                        <Button text="+ Add Ticket Type" onAction="#handleAddTicketType" style="-fx-padding: 8px 16px;"/>
+                    </HBox>
+                </VBox>
+
+                <Separator/>
+
+                <!-- Total Amount -->
+                <VBox spacing="12" style="-fx-border-color: #e5e5e5; -fx-border-radius: 8; -fx-padding: 16; -fx-background-color: white; -fx-background-radius: 8;">
+                    <GridPane hgap="12" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50"/>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                        </columnConstraints>
+                        
+                        <Label text="Total Amount:" style="-fx-font-size: 14px; -fx-font-weight: bold;" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <Label fx:id="totalAmountLabel" text="€0.00" style="-fx-font-size: 14px; -fx-font-weight: bold;" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                    </GridPane>
+                </VBox>
+
+                <!-- Action Buttons -->
+                <HBox spacing="10" alignment="CENTER_RIGHT">
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Clear" onAction="#handleClear" style="-fx-padding: 10px 20px;"/>
+                    <Button text="Save Sale" onAction="#handleSave" style="-fx-padding: 10px 20px; -fx-font-weight: bold;"/>
+                </HBox>
+
+                <Label fx:id="messageLabel" text=""/>
+            </VBox>
+        </ScrollPane>
+    </center>
+
+</BorderPane>

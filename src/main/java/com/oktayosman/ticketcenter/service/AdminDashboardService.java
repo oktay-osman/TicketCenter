@@ -4,6 +4,8 @@ import com.oktayosman.ticketcenter.model.Role;
 import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.repository.RoleRepository;
 import com.oktayosman.ticketcenter.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,16 +17,24 @@ import java.util.Set;
 @Service
 public class AdminDashboardService {
 
+    private static final String DISTRIBUTOR_ROLE_NAME = "DISTRIBUTOR";
     private static final List<String> ASSIGNABLE_ROLE_NAMES = List.of("USER", "ORGANIZER", "DISTRIBUTOR");
     private static final Set<String> ASSIGNABLE_ROLE_NAME_SET = Set.copyOf(ASSIGNABLE_ROLE_NAMES);
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final EntityManager entityManager;
+    private final double defaultDistributorCommissionRate;
 
     @Autowired
-    public AdminDashboardService(UserRepository userRepository, RoleRepository roleRepository) {
+    public AdminDashboardService(UserRepository userRepository,
+                                 RoleRepository roleRepository,
+                                 @Value("${app.distributor.default-commission-rate:0.10}") double defaultDistributorCommissionRate,
+                                 EntityManager entityManager) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.defaultDistributorCommissionRate = defaultDistributorCommissionRate;
+        this.entityManager = entityManager;
     }
 
     public int getTotalUsers() {
@@ -64,7 +74,22 @@ public class AdminDashboardService {
                 .orElseThrow(() -> new IllegalStateException("Role not found: " + normalizedRoleName));
 
         user.setRole(role);
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        if (DISTRIBUTOR_ROLE_NAME.equals(normalizedRoleName)) {
+            ensureDistributorRecord(savedUser.getId());
+        }
+
+        return savedUser;
+    }
+
+    private void ensureDistributorRecord(Long userId) {
+        entityManager.createNativeQuery(
+                        "INSERT INTO distributors (user_id, commission_rate, rating) VALUES (:userId, :commissionRate, NULL) " +
+                                "ON CONFLICT (user_id) DO NOTHING")
+                .setParameter("userId", userId)
+                .setParameter("commissionRate", defaultDistributorCommissionRate)
+                .executeUpdate();
     }
 
 }
