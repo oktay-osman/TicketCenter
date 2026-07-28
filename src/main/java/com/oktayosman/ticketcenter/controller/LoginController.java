@@ -72,10 +72,16 @@ public class LoginController {
                 enterPasswordField.clear();
             }
         } catch (IOException e) {
-            showErrorMessage("Error loading the dashboard");
+            // FXMLLoader wraps the real error; surface the root cause message
+            Throwable rootCause = e.getCause() != null ? e.getCause() : e;
+            showErrorMessage("Error loading dashboard: " + rootCause.getMessage());
             e.printStackTrace();
         } catch (IllegalArgumentException e) {
-            showErrorMessage("Invalid role configuration");
+            showErrorMessage("Invalid role: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            showErrorMessage("Unexpected error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
