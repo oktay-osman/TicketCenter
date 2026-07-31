@@ -79,10 +79,18 @@
                             </VBox>
                         </VBox>
 
+                        <!-- Distributor Assignment -->
+                        <Label text="Assign Distributors:" GridPane.rowIndex="11"/>
+                        <VBox GridPane.rowIndex="11" GridPane.columnIndex="1" spacing="4">
+                            <Label text="Select which distributors can sell tickets for this event"
+                                   style="-fx-font-size: 11px; -fx-text-fill: #666;"/>
+                            <ListView fx:id="distributorsListView" prefHeight="120"/>
+                        </VBox>
+
                         <!-- Submit -->
                         <Button text="Create Event"
                                 fx:id="submitButton"
-                                GridPane.rowIndex="11"
+                                GridPane.rowIndex="12"
                                 GridPane.columnIndex="1"/>
                     </GridPane>
                 </ScrollPane>
