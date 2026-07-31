@@ -9,6 +9,7 @@ import com.oktayosman.ticketcenter.repository.EventRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.oktayosman.ticketcenter.model.SeatType;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,6 +68,21 @@ public class EventService {
         }
         if (updatedEvent.getOrganizerLegacyId() != null) {
             existing.setOrganizerLegacyId(updatedEvent.getOrganizerLegacyId());
+        }
+
+        // Merge seat types: replace the existing collection in-place so that
+        // JPA orphanRemoval deletes removed entries and CascadeType.ALL inserts new ones.
+        if (existing.getSeatTypes() != null) {
+            existing.getSeatTypes().clear();
+        }
+        if (updatedEvent.getSeatTypes() != null && !updatedEvent.getSeatTypes().isEmpty()) {
+            if (existing.getSeatTypes() == null) {
+                existing.setSeatTypes(new ArrayList<>());
+            }
+            for (SeatType st : updatedEvent.getSeatTypes()) {
+                st.setEvent(existing);
+                existing.getSeatTypes().add(st);
+            }
         }
 
         existing.setOrganizer(organizer);
