@@ -80,6 +80,14 @@ public class OrganizerDashboardController {
     @FXML private Button deleteButton;
     @FXML private Button logoutButton;
 
+    // PROFILE TAB
+    @FXML private Label profileUsernameLabel;
+    @FXML private Label profileEmailLabel;
+    @FXML private TextField organizationNameField;
+    @FXML private Label organizerCommissionLabel;
+    @FXML private Label profileMessageLabel;
+    @FXML private Button saveProfileButton;
+
     // when non-null, submits will update the existing event instead of creating a new one
     private Long editingEventId = null;
 
@@ -131,6 +139,11 @@ public class OrganizerDashboardController {
 
         // Load distributor selection options for assignment
         loadDistributors();
+        loadOrganizerProfile();
+
+        if (saveProfileButton != null) {
+            saveProfileButton.setOnAction(e -> handleSaveProfile());
+        }
 
         editButton.setOnAction(e -> handleEditSelected());
         deleteButton.setOnAction(e -> handleDeleteSelected());
@@ -141,8 +154,11 @@ public class OrganizerDashboardController {
 
         // Load events when tab is selected
         mainTabPane.getSelectionModel().selectedIndexProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal.intValue() == 1) { // My Events tab
+            int selectedIndex = newVal.intValue();
+            if (selectedIndex == 1) {
                 loadOrganizerEvents();
+            } else if (selectedIndex == 2) {
+                loadOrganizerProfile();
             }
         });
 
@@ -604,6 +620,51 @@ public class OrganizerDashboardController {
             return List.of();
         }
         return new ArrayList<>(distributorsListView.getSelectionModel().getSelectedItems());
+    }
+
+    private void loadOrganizerProfile() {
+        if (profileUsernameLabel == null || profileEmailLabel == null || organizationNameField == null || organizerCommissionLabel == null) {
+            return;
+        }
+
+        User user = SessionManager.getCurrentUser();
+        if (user == null) {
+            profileMessageLabel.setStyle("-fx-text-fill: #dc2626;");
+            profileMessageLabel.setText("No user logged in.");
+            return;
+        }
+
+        profileUsernameLabel.setText(user.getUsername() != null ? user.getUsername() : "-");
+        profileEmailLabel.setText(user.getEmail() != null ? user.getEmail() : "-");
+
+        Organizer organizer = organizerService.getOrganizerByUserId(user.getId()).orElse(null);
+        if (organizer == null) {
+            profileMessageLabel.setStyle("-fx-text-fill: #dc2626;");
+            profileMessageLabel.setText("Organizer profile not found.");
+            organizationNameField.clear();
+            organizerCommissionLabel.setText("-");
+            return;
+        }
+
+        organizationNameField.setText(organizer.getOrganizationName() != null ? organizer.getOrganizationName() : "");
+        double commission = organizer.getCommission() != null ? organizer.getCommission() : 0.0;
+        organizerCommissionLabel.setText(String.format("%.2f%%", commission));
+        profileMessageLabel.setText("");
+    }
+
+    private void handleSaveProfile() {
+        User user = SessionManager.getCurrentUser();
+        if (user == null) {
+            profileMessageLabel.setStyle("-fx-text-fill: #dc2626;");
+            profileMessageLabel.setText("No user logged in.");
+            return;
+        }
+
+        String organizationName = organizationNameField.getText() != null ? organizationNameField.getText().trim() : "";
+        organizerService.updateOrganizerProfile(user.getId(), organizationName);
+        profileMessageLabel.setStyle("-fx-text-fill: #059669;");
+        profileMessageLabel.setText("Profile updated successfully.");
+        loadOrganizerProfile();
     }
 
     private void showError(String message) {

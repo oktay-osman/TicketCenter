@@ -36,6 +36,10 @@ public class DistributorDashboardController {
     @FXML private ListView<String> recentSalesList;
     @FXML private StackPane contentHost;
     @FXML private VBox dashboardOverviewPane;
+    @FXML private Label profileUsernameLabel;
+    @FXML private Label profileEmailLabel;
+    @FXML private Label profileCommissionLabel;
+    @FXML private Label profileRatingLabel;
 
     private final DistributorService distributorService;
     private Distributor currentDistributor;
@@ -64,6 +68,7 @@ public class DistributorDashboardController {
             if (currentDistributor != null) {
                 distributorLabel.setText(currentDistributor.getFirstName() + " " + currentDistributor.getLastName());
                 loadDashboardData();
+                loadProfileData();
                 showDashboardOverview();
             } else {
                 distributorLabel.setText("Distributor record not found for: " + sessionUser.getUsername());
@@ -98,6 +103,20 @@ public class DistributorDashboardController {
                 .collect(Collectors.toList());
 
         recentSalesList.setItems(FXCollections.observableArrayList(recentSalesDisplayList));
+    }
+
+    private void loadProfileData() {
+        if (currentDistributor == null) {
+            return;
+        }
+
+        User user = currentDistributor.getUser();
+        profileUsernameLabel.setText(user != null && user.getUsername() != null ? user.getUsername() : "-");
+        profileEmailLabel.setText(user != null && user.getEmail() != null ? user.getEmail() : "-");
+        profileCommissionLabel.setText(String.format("%.2f %%", currentDistributor.getCommissionRate() * 100));
+        profileRatingLabel.setText(currentDistributor.getRating() != null
+                ? String.format("%.1f / 5", currentDistributor.getRating())
+                : "Not rated yet");
     }
 
     private void showDashboardOverview() {
