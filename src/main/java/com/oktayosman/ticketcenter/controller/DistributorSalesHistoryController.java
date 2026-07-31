@@ -140,9 +140,16 @@ public class DistributorSalesHistoryController {
     }
 
     private void loadEventFilter() {
-        List<Event> allEvents = eventService.getAllEvents();
-        List<String> eventNames = allEvents.stream()
+        if (currentDistributor == null) {
+            eventFilterComboBox.setItems(FXCollections.observableArrayList());
+            return;
+        }
+
+        List<Event> assignedEvents = eventService.getEventsByDistributor(currentDistributor);
+        List<String> eventNames = assignedEvents.stream()
                 .map(Event::getName)
+                .distinct()
+                .sorted()
                 .collect(Collectors.toList());
 
         eventFilterComboBox.setItems(FXCollections.observableArrayList(eventNames));
