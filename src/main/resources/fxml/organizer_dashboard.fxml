@@ -104,6 +104,7 @@
                         <Button text="Refresh" fx:id="refreshButton"/>
                         <Button text="Edit Selected" fx:id="editButton"/>
                         <Button text="Delete Selected" fx:id="deleteButton"/>
+                        <Button text="Rate Distributor" fx:id="rateDistributorButton"/>
                     </HBox>
                     <TableView fx:id="eventsTable" VBox.vgrow="ALWAYS">
                         <columns>

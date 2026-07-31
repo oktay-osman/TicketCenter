@@ -17,6 +17,8 @@ public interface EventDistributorRepository extends JpaRepository<EventDistribut
 
     List<EventDistributor> findByDistributor(Distributor distributor);
 
+    boolean existsByEventAndDistributor(Event event, Distributor distributor);
+
     @Query("select ed.distributor from EventDistributor ed where ed.event.id = :eventId")
     List<Distributor> findDistributorsByEventId(@Param("eventId") Long eventId);
 }
