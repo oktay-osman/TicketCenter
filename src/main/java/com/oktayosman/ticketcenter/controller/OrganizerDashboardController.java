@@ -3,12 +3,15 @@ package com.oktayosman.ticketcenter.controller;
 import com.oktayosman.ticketcenter.model.Event;
 import com.oktayosman.ticketcenter.model.EventCategory;
 import com.oktayosman.ticketcenter.model.EventStatus;
+import com.oktayosman.ticketcenter.model.Distributor;
 import com.oktayosman.ticketcenter.model.Organizer;
 import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.model.SeatType;
 import com.oktayosman.ticketcenter.model.SeatCategory;
+import com.oktayosman.ticketcenter.service.DistributorService;
 import com.oktayosman.ticketcenter.service.EventService;
 import com.oktayosman.ticketcenter.repository.OrganizerRepository;
+import com.oktayosman.ticketcenter.service.OrganizerService;
 import com.oktayosman.ticketcenter.util.SessionManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -53,6 +56,7 @@ public class OrganizerDashboardController {
     @FXML private TextField capacityField;
     @FXML private Button imageButton;
     @FXML private Label imageLabel;
+    @FXML private ListView<Distributor> distributorsListView;
     @FXML private Button submitButton;
 
     // Ticket types UI
@@ -86,10 +90,14 @@ public class OrganizerDashboardController {
     private OrganizerRepository organizerRepository;
 
     @Autowired
-    private com.oktayosman.ticketcenter.service.OrganizerService organizerService;
+    private OrganizerService organizerService;
+
+    @Autowired
+    private DistributorService distributorService;
 
     private File selectedImage;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private final List<Distributor> allDistributors = new ArrayList<>();
 
     @FXML
     public void initialize() {
@@ -120,6 +128,9 @@ public class OrganizerDashboardController {
         // Setup ticket types UI
         addTicketTypeButton.setOnAction(e -> addTicketTypeRow(null, null, null));
         updateNoTicketTypesLabel();
+
+        // Load distributor selection options for assignment
+        loadDistributors();
 
         editButton.setOnAction(e -> handleEditSelected());
         deleteButton.setOnAction(e -> handleDeleteSelected());
@@ -367,13 +378,14 @@ public class OrganizerDashboardController {
             Event saved;
             Alert success = new Alert(Alert.AlertType.INFORMATION);
             success.setTitle("Success");
+            List<Distributor> selectedDistributors = getSelectedDistributors();
 
             if (editingEventId == null) {
-                saved = eventService.createEvent(event, organizer);
+                saved = eventService.createEvent(event, organizer, selectedDistributors);
                 success.setHeaderText("Event Created");
                 success.setContentText("Event '" + name + "' created successfully (ID: " + saved.getId() + ")");
             } else {
-                saved = eventService.updateEvent(editingEventId, event, organizer);
+                saved = eventService.updateEvent(editingEventId, event, organizer, selectedDistributors);
                 success.setHeaderText("Event Updated");
                 success.setContentText("Event '" + name + "' updated successfully (ID: " + saved.getId() + ")");
                 // reset editing state
@@ -404,6 +416,9 @@ public class OrganizerDashboardController {
         capacityField.clear();
         imageLabel.setText("No file selected");
         selectedImage = null;
+        if (distributorsListView != null) {
+            distributorsListView.getSelectionModel().clearSelection();
+        }
         // Clear seat types
         if (ticketTypesEntriesBox != null) {
             ticketTypesEntriesBox.getChildren().clear();
@@ -443,6 +458,21 @@ public class OrganizerDashboardController {
             }
         } else {
             updateNoTicketTypesLabel();
+        }
+
+        // Pre-select assigned distributors in edit mode
+        if (distributorsListView != null) {
+            distributorsListView.getSelectionModel().clearSelection();
+            List<Distributor> assigned = eventService.getAssignedDistributors(selected.getId());
+            for (Distributor distributor : assigned) {
+                for (int i = 0; i < allDistributors.size(); i++) {
+                    Distributor available = allDistributors.get(i);
+                    if (available.getId() != null && available.getId().equals(distributor.getId())) {
+                        distributorsListView.getSelectionModel().select(i);
+                        break;
+                    }
+                }
+            }
         }
 
         // set editing state and switch to create tab
@@ -541,6 +571,39 @@ public class OrganizerDashboardController {
         } else {
             ticketTypesEntriesBox.getChildren().remove(noTicketTypesLabel);
         }
+    }
+
+    private void loadDistributors() {
+        if (distributorsListView == null) {
+            return;
+        }
+
+        allDistributors.clear();
+        allDistributors.addAll(distributorService.getAllDistributors());
+
+        distributorsListView.setItems(FXCollections.observableArrayList(allDistributors));
+        distributorsListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        distributorsListView.setCellFactory(listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(Distributor item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    String fullName = (item.getFirstName() == null ? "" : item.getFirstName())
+                            + " "
+                            + (item.getLastName() == null ? "" : item.getLastName());
+                    setText(fullName.trim() + " (" + item.getUsername() + ")");
+                }
+            }
+        });
+    }
+
+    private List<Distributor> getSelectedDistributors() {
+        if (distributorsListView == null) {
+            return List.of();
+        }
+        return new ArrayList<>(distributorsListView.getSelectionModel().getSelectedItems());
     }
 
     private void showError(String message) {
