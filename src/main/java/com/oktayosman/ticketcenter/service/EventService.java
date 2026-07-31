@@ -31,6 +31,10 @@ public class EventService {
         return eventRepository.findAll();
     }
 
+    public List<Event> getAllEventsWithOrganizerUser() {
+        return eventRepository.findAllWithOrganizerUser();
+    }
+
     @Transactional
     public Event createEvent(Event event, Organizer organizer) {
         return createEvent(event, organizer, List.of());
