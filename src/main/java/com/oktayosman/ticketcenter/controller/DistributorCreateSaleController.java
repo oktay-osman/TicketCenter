@@ -65,16 +65,26 @@ public class DistributorCreateSaleController {
     }
 
     private void loadEvents() {
-        List<Event> allEvents = eventService.getAllEvents();
-        
-        eventMap = allEvents.stream()
-                .collect(Collectors.toMap(Event::getName, event -> event));
+        if (currentDistributor == null) {
+            eventMap = new HashMap<>();
+            eventComboBox.setItems(FXCollections.observableArrayList());
+            return;
+        }
 
-        List<String> eventNames = allEvents.stream()
+        List<Event> assignedEvents = eventService.getEventsByDistributor(currentDistributor);
+
+        eventMap = assignedEvents.stream()
+                .collect(Collectors.toMap(Event::getName, event -> event, (left, right) -> left));
+
+        List<String> eventNames = assignedEvents.stream()
                 .map(Event::getName)
                 .collect(Collectors.toList());
 
         eventComboBox.setItems(FXCollections.observableArrayList(eventNames));
+
+        if (eventNames.isEmpty()) {
+            showErrorMessage("No events are assigned to your distributor account yet.");
+        }
     }
 
     @FXML
