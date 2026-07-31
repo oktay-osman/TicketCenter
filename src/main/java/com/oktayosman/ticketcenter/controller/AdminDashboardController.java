@@ -40,13 +40,16 @@ public class AdminDashboardController {
     public void initialize() {
         loadDashboardData();
         showDashboardOverview();
-        String currentUsername = SessionManager.getCurrentUser() != null ? SessionManager.getCurrentUser().getUsername() : "Admin";
+        String currentUsername = SessionManager.getCurrentUser() != null
+                ? SessionManager.getCurrentUser().getUsername() : "Admin";
         adminLabel.setText(currentUsername);
     }
 
     private void loadDashboardData() {
         totalUsersLabel.setText(String.valueOf(adminDashboardService.getTotalUsers()));
         totalEventsLabel.setText(String.valueOf(adminDashboardService.getTotalEvents()));
+        totalTicketsLabel.setText(String.valueOf(adminDashboardService.getTotalTicketsSold()));
+        totalRevenueLabel.setText(String.format("€%.2f", adminDashboardService.getTotalRevenue()));
     }
 
     private void showDashboardOverview() {
@@ -75,12 +78,58 @@ public class AdminDashboardController {
 
     @FXML
     public void handleManageEvents(ActionEvent actionEvent) {
-        // TODO: Implement manage events functionality
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin_events.fxml"));
+            loader.setControllerFactory(SpringContext::getBean);
+            Parent root = loader.load();
+
+            AdminEventsController controller = loader.getController();
+            controller.setOnBack(this::showDashboardOverview);
+
+            contentHost.getChildren().setAll(root);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load admin events view", e);
+        }
+    }
+
+    @FXML
+    public void handleCreateAccount(ActionEvent actionEvent) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin_create_account.fxml"));
+            loader.setControllerFactory(SpringContext::getBean);
+            Parent root = loader.load();
+
+            AdminCreateAccountController controller = loader.getController();
+            controller.setOnBack(() -> {
+                loadDashboardData();
+                showDashboardOverview();
+            });
+
+            contentHost.getChildren().setAll(root);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load create account view", e);
+        }
+    }
+
+    @FXML
+    public void handleManageProfiles(ActionEvent actionEvent) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin_profiles.fxml"));
+            loader.setControllerFactory(SpringContext::getBean);
+            Parent root = loader.load();
+
+            AdminProfilesController controller = loader.getController();
+            controller.setOnBack(this::showDashboardOverview);
+
+            contentHost.getChildren().setAll(root);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load admin profiles view", e);
+        }
     }
 
     @FXML
     public void handleViewReports(ActionEvent actionEvent) {
-        // TODO: Implement view reports functionality
+        // TODO: Phase 5 — Reports
     }
 
     @FXML

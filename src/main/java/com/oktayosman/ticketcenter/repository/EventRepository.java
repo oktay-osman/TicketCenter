@@ -14,4 +14,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query("select distinct e from Event e join e.distributorAssignments ed where ed.distributor = :distributor")
     List<Event> findEventsByDistributor(@Param("distributor") Distributor distributor);
+
+    @Query("select distinct e from Event e left join fetch e.organizer o left join fetch o.user")
+    List<Event> findAllWithOrganizerUser();
 }
