@@ -2,6 +2,8 @@ package com.oktayosman.ticketcenter.model;
 
 import jakarta.persistence.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "distributors")
 public class Distributor {
@@ -20,6 +22,9 @@ public class Distributor {
 
     @Column
     private Float rating;
+
+    @OneToMany(mappedBy = "distributor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EventDistributor> eventAssignments;
 
     public Distributor() {}
 
@@ -76,5 +81,13 @@ public class Distributor {
 
     public void setRating(Float rating) {
         this.rating = rating;
+    }
+
+    public List<EventDistributor> getEventAssignments() {
+        return eventAssignments;
+    }
+
+    public void setEventAssignments(List<EventDistributor> eventAssignments) {
+        this.eventAssignments = eventAssignments;
     }
 }

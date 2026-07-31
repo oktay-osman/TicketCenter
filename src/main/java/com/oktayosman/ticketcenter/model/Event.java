@@ -57,6 +57,9 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<Ticket> tickets;
 
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EventDistributor> distributorAssignments;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -152,6 +155,14 @@ public class Event {
 
     public void setTickets(List<Ticket> tickets) {
         this.tickets = tickets;
+    }
+
+    public List<EventDistributor> getDistributorAssignments() {
+        return distributorAssignments;
+    }
+
+    public void setDistributorAssignments(List<EventDistributor> distributorAssignments) {
+        this.distributorAssignments = distributorAssignments;
     }
 
     public Long getId() {

@@ -65,16 +65,26 @@ public class DistributorCreateSaleController {
     }
 
     private void loadEvents() {
-        List<Event> allEvents = eventService.getAllEvents();
-        
-        eventMap = allEvents.stream()
-                .collect(Collectors.toMap(Event::getName, event -> event));
+        if (currentDistributor == null) {
+            eventMap = new HashMap<>();
+            eventComboBox.setItems(FXCollections.observableArrayList());
+            return;
+        }
 
-        List<String> eventNames = allEvents.stream()
+        List<Event> assignedEvents = eventService.getEventsByDistributor(currentDistributor);
+
+        eventMap = assignedEvents.stream()
+                .collect(Collectors.toMap(Event::getName, event -> event, (left, right) -> left));
+
+        List<String> eventNames = assignedEvents.stream()
                 .map(Event::getName)
                 .collect(Collectors.toList());
 
         eventComboBox.setItems(FXCollections.observableArrayList(eventNames));
+
+        if (eventNames.isEmpty()) {
+            showErrorMessage("No events are assigned to your distributor account yet.");
+        }
     }
 
     @FXML
@@ -85,8 +95,10 @@ public class DistributorCreateSaleController {
         }
 
         Event selectedEvent = eventMap.get(eventComboBox.getValue());
-        if (selectedEvent == null || selectedEvent.getSeatTypes() == null) {
-            showErrorMessage("No ticket types available for this event");
+        if (selectedEvent == null
+                || selectedEvent.getSeatTypes() == null
+                || selectedEvent.getSeatTypes().isEmpty()) {
+            showErrorMessage("No ticket types available for this event. Please add seat types to the event first.");
             return;
         }
 
@@ -233,9 +245,9 @@ public class DistributorCreateSaleController {
     public void updateTotal() {
         BigDecimal total = ticketItemRows.stream()
                 .map(row -> {
-                    if (row.getQuantity() > 0) {
-                        BigDecimal unitPrice = row.getSelectedSeatType().getPrice();
-                        return unitPrice.multiply(new BigDecimal(row.getQuantity()));
+                    SeatType st = row.getSelectedSeatType();
+                    if (st != null && row.getQuantity() > 0) {
+                        return st.getPrice().multiply(new BigDecimal(row.getQuantity()));
                     }
                     return BigDecimal.ZERO;
                 })
@@ -288,18 +300,28 @@ public class DistributorCreateSaleController {
                 }
             });
 
-            // Quantity Spinner
+            // Quantity Spinner — disabled until a seat type is chosen
             quantitySpinner = new Spinner<>();
             quantitySpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 1000, 0, 1));
             quantitySpinner.setPrefWidth(80);
             quantitySpinner.setEditable(true);
+            quantitySpinner.setDisable(true);
 
             // Price Label
             priceLabel = new Label("€0.00");
             priceLabel.setPrefWidth(80);
 
             // Update listeners
-            seatTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> updatePrice());
+            seatTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+                quantitySpinner.setDisable(newVal == null);
+                if (newVal == null) {
+                    // Reset spinner and price when deselected
+                    quantitySpinner.getValueFactory().setValue(0);
+                    priceLabel.setText("€0.00");
+                    parent.updateTotal();
+                }
+                updatePrice();
+            });
             quantitySpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
                 updatePrice();
                 parent.updateTotal();
@@ -325,6 +347,8 @@ public class DistributorCreateSaleController {
                 Integer quantity = quantitySpinner.getValue();
                 BigDecimal subtotal = unitPrice.multiply(new BigDecimal(quantity));
                 priceLabel.setText(String.format("€%.2f", subtotal));
+            } else {
+                priceLabel.setText("€0.00");
             }
         }
 

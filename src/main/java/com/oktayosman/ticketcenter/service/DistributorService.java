@@ -18,13 +18,16 @@ public class DistributorService {
     private final DistributorRepository distributorRepository;
     private final TicketSaleRepository ticketSaleRepository;
     private final TicketSaleItemRepository ticketSaleItemRepository;
+    private final EventService eventService;
 
     public DistributorService(DistributorRepository distributorRepository,
                               TicketSaleRepository ticketSaleRepository,
-                              TicketSaleItemRepository ticketSaleItemRepository) {
+                              TicketSaleItemRepository ticketSaleItemRepository,
+                              EventService eventService) {
         this.distributorRepository = distributorRepository;
         this.ticketSaleRepository = ticketSaleRepository;
         this.ticketSaleItemRepository = ticketSaleItemRepository;
+        this.eventService = eventService;
     }
 
     public TicketSale createTicketSale(TicketSale ticketSale) {
@@ -81,5 +84,9 @@ public class DistributorService {
 
     public List<Distributor> getAllDistributors() {
         return distributorRepository.findAll();
+    }
+
+    public List<Event> getEventsForDistributor(Distributor distributor) {
+        return eventService.getEventsByDistributor(distributor);
     }
 }
