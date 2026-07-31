@@ -37,7 +37,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -78,6 +81,7 @@ public class OrganizerDashboardController {
     @FXML private Button refreshButton;
     @FXML private Button editButton;
     @FXML private Button deleteButton;
+    @FXML private Button rateDistributorButton;
     @FXML private Button logoutButton;
 
     // PROFILE TAB
@@ -147,6 +151,7 @@ public class OrganizerDashboardController {
 
         editButton.setOnAction(e -> handleEditSelected());
         deleteButton.setOnAction(e -> handleDeleteSelected());
+        rateDistributorButton.setOnAction(e -> handleRateDistributor());
         logoutButton.setOnAction(e -> handleLogout());
 
         // Setup table columns for My Events tab
@@ -524,6 +529,101 @@ public class OrganizerDashboardController {
         }
     }
 
+    private void handleRateDistributor() {
+        Event selectedEvent = eventsTable.getSelectionModel().getSelectedItem();
+        if (selectedEvent == null) {
+            showError("Please select an event before rating a distributor.");
+            return;
+        }
+
+        User user = SessionManager.getCurrentUser();
+        if (user == null) {
+            showError("No user is logged in.");
+            return;
+        }
+
+        Organizer organizer = organizerService.getOrganizerByUserId(user.getId()).orElse(null);
+        if (organizer == null) {
+            showError("Organizer profile not found.");
+            return;
+        }
+
+        List<Distributor> assignedDistributors = eventService.getAssignedDistributors(selectedEvent.getId());
+        if (assignedDistributors.isEmpty()) {
+            showError("No distributors are assigned to this event.");
+            return;
+        }
+
+        Map<String, Distributor> distributorChoices = new LinkedHashMap<>();
+        for (Distributor distributor : assignedDistributors) {
+            String label = formatDistributorDisplay(distributor);
+            if (distributorChoices.containsKey(label)) {
+                label = label + " [ID: " + distributor.getId() + "]";
+            }
+            distributorChoices.put(label, distributor);
+        }
+
+        ChoiceDialog<String> distributorDialog = new ChoiceDialog<>(
+                distributorChoices.keySet().iterator().next(),
+                distributorChoices.keySet()
+        );
+        distributorDialog.setTitle("Rate Distributor");
+        distributorDialog.setHeaderText("Select distributor for event: " + selectedEvent.getName());
+        distributorDialog.setContentText("Distributor:");
+
+        Optional<String> selectedDistributorLabel = distributorDialog.showAndWait();
+        if (selectedDistributorLabel.isEmpty()) {
+            return;
+        }
+        Distributor selectedDistributor = distributorChoices.get(selectedDistributorLabel.get());
+
+        TextInputDialog ratingDialog = new TextInputDialog("5");
+        ratingDialog.setTitle("Rate Distributor");
+        ratingDialog.setHeaderText("Enter a rating between 1 and 5");
+        ratingDialog.setContentText("Rating:");
+
+        Optional<String> ratingInput = ratingDialog.showAndWait();
+        if (ratingInput.isEmpty()) {
+            return;
+        }
+
+        int rating;
+        try {
+            rating = Integer.parseInt(ratingInput.get().trim());
+        } catch (NumberFormatException ex) {
+            showError("Rating must be a whole number between 1 and 5.");
+            return;
+        }
+        if (rating < 1 || rating > 5) {
+            showError("Rating must be between 1 and 5.");
+            return;
+        }
+
+        TextInputDialog commentDialog = new TextInputDialog();
+        commentDialog.setTitle("Rate Distributor");
+        commentDialog.setHeaderText("Optional comment for this rating");
+        commentDialog.setContentText("Comment:");
+        String comment = commentDialog.showAndWait().orElse("").trim();
+
+        try {
+            distributorService.rateDistributor(
+                    organizer.getId(),
+                    selectedEvent.getId(),
+                    selectedDistributor.getId(),
+                    rating,
+                    comment
+            );
+
+            Alert success = new Alert(Alert.AlertType.INFORMATION);
+            success.setTitle("Rating Saved");
+            success.setHeaderText(null);
+            success.setContentText("Rating saved for " + formatDistributorDisplay(selectedDistributor) + ".");
+            success.showAndWait();
+        } catch (Exception ex) {
+            showError("Failed to save rating: " + ex.getMessage());
+        }
+    }
+
     private void handleLogout() {
         try {
             SessionManager.logout();
@@ -673,5 +773,13 @@ public class OrganizerDashboardController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.show();
+    }
+
+    private String formatDistributorDisplay(Distributor distributor) {
+        String firstName = distributor.getFirstName() != null ? distributor.getFirstName() : "";
+        String lastName = distributor.getLastName() != null ? distributor.getLastName() : "";
+        String username = distributor.getUsername() != null ? distributor.getUsername() : "unknown";
+        String fullName = (firstName + " " + lastName).trim();
+        return fullName.isBlank() ? username : fullName + " (" + username + ")";
     }
 }
