@@ -5,11 +5,13 @@ import com.oktayosman.ticketcenter.model.EventCategory;
 import com.oktayosman.ticketcenter.model.EventStatus;
 import com.oktayosman.ticketcenter.model.Distributor;
 import com.oktayosman.ticketcenter.model.Organizer;
+import com.oktayosman.ticketcenter.model.Notification;
 import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.model.SeatType;
 import com.oktayosman.ticketcenter.model.SeatCategory;
 import com.oktayosman.ticketcenter.service.DistributorService;
 import com.oktayosman.ticketcenter.service.EventService;
+import com.oktayosman.ticketcenter.service.NotificationService;
 import com.oktayosman.ticketcenter.repository.OrganizerRepository;
 import com.oktayosman.ticketcenter.service.OrganizerService;
 import com.oktayosman.ticketcenter.util.SessionManager;
@@ -92,6 +94,12 @@ public class OrganizerDashboardController {
     @FXML private Label profileMessageLabel;
     @FXML private Button saveProfileButton;
 
+    // NOTIFICATIONS TAB
+    @FXML private ListView<String> notificationsListView;
+    @FXML private Button refreshNotificationsButton;
+    @FXML private Button markNotificationReadButton;
+    @FXML private Button markAllNotificationsReadButton;
+
     // when non-null, submits will update the existing event instead of creating a new one
     private Long editingEventId = null;
 
@@ -107,9 +115,13 @@ public class OrganizerDashboardController {
     @Autowired
     private DistributorService distributorService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     private File selectedImage;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private final List<Distributor> allDistributors = new ArrayList<>();
+    private final Map<String, Long> unreadNotificationKeyToId = new LinkedHashMap<>();
 
     @FXML
     public void initialize() {
@@ -144,6 +156,7 @@ public class OrganizerDashboardController {
         // Load distributor selection options for assignment
         loadDistributors();
         loadOrganizerProfile();
+        loadNotifications();
 
         if (saveProfileButton != null) {
             saveProfileButton.setOnAction(e -> handleSaveProfile());
@@ -154,15 +167,30 @@ public class OrganizerDashboardController {
         rateDistributorButton.setOnAction(e -> handleRateDistributor());
         logoutButton.setOnAction(e -> handleLogout());
 
+        if (refreshNotificationsButton != null) {
+            refreshNotificationsButton.setOnAction(e -> loadNotifications());
+        }
+        if (markNotificationReadButton != null) {
+            markNotificationReadButton.setOnAction(e -> handleMarkSelectedNotificationRead());
+        }
+        if (markAllNotificationsReadButton != null) {
+            markAllNotificationsReadButton.setOnAction(e -> handleMarkAllNotificationsRead());
+        }
+
         // Setup table columns for My Events tab
         setupEventsTable();
 
         // Load events when tab is selected
-        mainTabPane.getSelectionModel().selectedIndexProperty().addListener((obs, oldVal, newVal) -> {
-            int selectedIndex = newVal.intValue();
-            if (selectedIndex == 1) {
+        mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab == null) {
+                return;
+            }
+            String tabText = newTab.getText();
+            if ("My Events".equals(tabText)) {
                 loadOrganizerEvents();
-            } else if (selectedIndex == 2) {
+            } else if ("Notifications".equals(tabText)) {
+                loadNotifications();
+            } else if ("Profile".equals(tabText)) {
                 loadOrganizerProfile();
             }
         });
@@ -750,6 +778,77 @@ public class OrganizerDashboardController {
         double commission = organizer.getCommission() != null ? organizer.getCommission() : 0.0;
         organizerCommissionLabel.setText(String.format("%.2f%%", commission));
         profileMessageLabel.setText("");
+    }
+
+    private void loadNotifications() {
+        if (notificationsListView == null) {
+            return;
+        }
+
+        User user = SessionManager.getCurrentUser();
+        if (user == null) {
+            notificationsListView.setItems(FXCollections.observableArrayList("No user logged in."));
+            unreadNotificationKeyToId.clear();
+            return;
+        }
+
+        notificationService.notifyUpcomingEventUnsoldTickets(user);
+        List<Notification> unreadNotifications = notificationService.getUnreadNotifications(user);
+        unreadNotificationKeyToId.clear();
+
+        List<String> rows = new ArrayList<>();
+        for (Notification notification : unreadNotifications) {
+            String row = String.format("[%s] %s",
+                    notification.getCreatedAt().format(DATE_TIME_FORMATTER),
+                    notification.getMessage());
+            String key = row;
+            if (unreadNotificationKeyToId.containsKey(key)) {
+                key = row + " (#" + notification.getId() + ")";
+            }
+            unreadNotificationKeyToId.put(key, notification.getId());
+            rows.add(key);
+        }
+
+        if (rows.isEmpty()) {
+            rows.add("No unread notifications.");
+        }
+        notificationsListView.setItems(FXCollections.observableArrayList(rows));
+    }
+
+    private void handleMarkSelectedNotificationRead() {
+        if (notificationsListView == null) {
+            return;
+        }
+
+        User user = SessionManager.getCurrentUser();
+        if (user == null) {
+            showError("No user logged in.");
+            return;
+        }
+
+        String selected = notificationsListView.getSelectionModel().getSelectedItem();
+        if (selected == null || !unreadNotificationKeyToId.containsKey(selected)) {
+            showError("Select an unread notification first.");
+            return;
+        }
+
+        try {
+            notificationService.markAsRead(unreadNotificationKeyToId.get(selected), user.getId());
+            loadNotifications();
+        } catch (Exception ex) {
+            showError("Failed to update notification: " + ex.getMessage());
+        }
+    }
+
+    private void handleMarkAllNotificationsRead() {
+        User user = SessionManager.getCurrentUser();
+        if (user == null) {
+            showError("No user logged in.");
+            return;
+        }
+
+        notificationService.markAllAsRead(user);
+        loadNotifications();
     }
 
     private void handleSaveProfile() {
