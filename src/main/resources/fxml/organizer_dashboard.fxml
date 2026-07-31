@@ -120,6 +120,18 @@
                 </VBox>
             </Tab>
 
+            <Tab text="Notifications">
+                <VBox spacing="12" style="-fx-padding: 20;">
+                    <Label text="Notifications" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                    <HBox spacing="8">
+                        <Button text="Refresh" fx:id="refreshNotificationsButton"/>
+                        <Button text="Mark Selected Read" fx:id="markNotificationReadButton"/>
+                        <Button text="Mark All Read" fx:id="markAllNotificationsReadButton"/>
+                    </HBox>
+                    <ListView fx:id="notificationsListView" VBox.vgrow="ALWAYS"/>
+                </VBox>
+            </Tab>
+
             <Tab text="Profile">
                 <VBox spacing="14" style="-fx-padding: 20;">
                     <Label text="My Profile" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>

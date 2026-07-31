@@ -20,11 +20,14 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final EventDistributorRepository eventDistributorRepository;
+    private final NotificationService notificationService;
 
     public EventService(EventRepository eventRepository,
-                        EventDistributorRepository eventDistributorRepository) {
+                        EventDistributorRepository eventDistributorRepository,
+                        NotificationService notificationService) {
         this.eventRepository = eventRepository;
         this.eventDistributorRepository = eventDistributorRepository;
+        this.notificationService = notificationService;
     }
 
     public List<Event> getAllEvents() {
@@ -45,6 +48,7 @@ public class EventService {
         event.setOrganizer(organizer);
         Event savedEvent = eventRepository.save(event);
         assignDistributorsToEvent(savedEvent, distributors);
+        notificationService.notifyDistributorsOfNewEvent(savedEvent, distributors);
         return savedEvent;
     }
 
@@ -92,6 +96,7 @@ public class EventService {
         existing.setOrganizer(organizer);
         Event savedEvent = eventRepository.save(existing);
         updateEventDistributors(savedEvent, distributors);
+        notificationService.notifyDistributorsOfNewEvent(savedEvent, distributors);
         return savedEvent;
     }
 

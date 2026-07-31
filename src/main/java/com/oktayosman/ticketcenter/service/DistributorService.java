@@ -28,6 +28,7 @@ public class DistributorService {
     private final TicketSaleRepository ticketSaleRepository;
     private final TicketSaleItemRepository ticketSaleItemRepository;
     private final EventService eventService;
+    private final NotificationService notificationService;
 
     public DistributorService(DistributorRepository distributorRepository,
                               DistributorRatingRepository distributorRatingRepository,
@@ -36,7 +37,8 @@ public class DistributorService {
                               EventDistributorRepository eventDistributorRepository,
                               TicketSaleRepository ticketSaleRepository,
                               TicketSaleItemRepository ticketSaleItemRepository,
-                              EventService eventService) {
+                              EventService eventService,
+                              NotificationService notificationService) {
         this.distributorRepository = distributorRepository;
         this.distributorRatingRepository = distributorRatingRepository;
         this.organizerRepository = organizerRepository;
@@ -45,6 +47,7 @@ public class DistributorService {
         this.ticketSaleRepository = ticketSaleRepository;
         this.ticketSaleItemRepository = ticketSaleItemRepository;
         this.eventService = eventService;
+        this.notificationService = notificationService;
     }
 
     public TicketSale createTicketSale(TicketSale ticketSale) {
@@ -55,7 +58,9 @@ public class DistributorService {
             }
         }
         ticketSale.setTotalAmount(total);
-        return ticketSaleRepository.save(ticketSale);
+        TicketSale saved = ticketSaleRepository.save(ticketSale);
+        notificationService.notifyOrganizerTicketsSold(saved);
+        return saved;
     }
 
     public List<TicketSale> getDistributorSales(Distributor distributor) {
