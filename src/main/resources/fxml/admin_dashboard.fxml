@@ -21,6 +21,8 @@
         <HBox spacing="10" style="-fx-padding: 10;">
             <Button text="Users" onAction="#handleManageUsers"/>
             <Button text="Events" onAction="#handleManageEvents"/>
+            <Button text="Profiles" onAction="#handleManageProfiles"/>
+            <Button text="Create Account" onAction="#handleCreateAccount" style="-fx-background-color: #059669; -fx-text-fill: white;"/>
             <Button text="Reports" onAction="#handleViewReports"/>
             <Pane HBox.hgrow="ALWAYS"/>
             <Label fx:id="adminLabel" text="Admin Panel"/>
