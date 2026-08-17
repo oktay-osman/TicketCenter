@@ -1,9 +1,11 @@
 package com.oktayosman.ticketcenter.controller;
 
 import com.oktayosman.ticketcenter.model.Distributor;
+import com.oktayosman.ticketcenter.model.Notification;
 import com.oktayosman.ticketcenter.model.TicketSale;
 import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.service.DistributorService;
+import com.oktayosman.ticketcenter.service.NotificationService;
 import com.oktayosman.ticketcenter.util.SessionManager;
 import com.oktayosman.ticketcenter.util.SpringContext;
 import javafx.collections.FXCollections;
@@ -21,7 +23,11 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -40,13 +46,20 @@ public class DistributorDashboardController {
     @FXML private Label profileEmailLabel;
     @FXML private Label profileCommissionLabel;
     @FXML private Label profileRatingLabel;
+    @FXML private ListView<String> notificationsList;
+    @FXML private Label unreadNotificationsLabel;
 
     private final DistributorService distributorService;
+    private final NotificationService notificationService;
     private Distributor currentDistributor;
+    private final Map<String, Long> unreadNotificationKeyToId = new LinkedHashMap<>();
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @Autowired
-    public DistributorDashboardController(DistributorService distributorService) {
+    public DistributorDashboardController(DistributorService distributorService,
+                                          NotificationService notificationService) {
         this.distributorService = distributorService;
+        this.notificationService = notificationService;
     }
 
     @FXML
@@ -69,6 +82,7 @@ public class DistributorDashboardController {
                 distributorLabel.setText(currentDistributor.getFirstName() + " " + currentDistributor.getLastName());
                 loadDashboardData();
                 loadProfileData();
+                loadNotifications();
                 showDashboardOverview();
             } else {
                 distributorLabel.setText("Distributor record not found for: " + sessionUser.getUsername());
@@ -121,6 +135,70 @@ public class DistributorDashboardController {
 
     private void showDashboardOverview() {
         contentHost.getChildren().setAll(dashboardOverviewPane);
+    }
+
+    @FXML
+    public void handleRefreshNotifications() {
+        loadNotifications();
+    }
+
+    @FXML
+    public void handleMarkSelectedNotificationRead() {
+        User user = SessionManager.getCurrentUser();
+        if (user == null || notificationsList == null) {
+            return;
+        }
+
+        String selected = notificationsList.getSelectionModel().getSelectedItem();
+        if (selected == null || !unreadNotificationKeyToId.containsKey(selected)) {
+            return;
+        }
+
+        notificationService.markAsRead(unreadNotificationKeyToId.get(selected), user.getId());
+        loadNotifications();
+    }
+
+    @FXML
+    public void handleMarkAllNotificationsRead() {
+        User user = SessionManager.getCurrentUser();
+        if (user == null) {
+            return;
+        }
+        notificationService.markAllAsRead(user);
+        loadNotifications();
+    }
+
+    private void loadNotifications() {
+        User user = SessionManager.getCurrentUser();
+        if (user == null || notificationsList == null) {
+            return;
+        }
+
+        notificationService.notifyUpcomingEventUnsoldTickets(user);
+        List<Notification> unreadNotifications = notificationService.getUnreadNotifications(user);
+
+        unreadNotificationKeyToId.clear();
+        List<String> rows = new ArrayList<>();
+        for (Notification notification : unreadNotifications) {
+            String row = String.format("[%s] %s",
+                    notification.getCreatedAt().format(DATE_TIME_FORMATTER),
+                    notification.getMessage());
+            String key = row;
+            if (unreadNotificationKeyToId.containsKey(key)) {
+                key = row + " (#" + notification.getId() + ")";
+            }
+            unreadNotificationKeyToId.put(key, notification.getId());
+            rows.add(key);
+        }
+
+        if (rows.isEmpty()) {
+            rows.add("No unread notifications.");
+        }
+
+        notificationsList.setItems(FXCollections.observableArrayList(rows));
+        if (unreadNotificationsLabel != null) {
+            unreadNotificationsLabel.setText("Unread: " + unreadNotifications.size());
+        }
     }
 
     @FXML

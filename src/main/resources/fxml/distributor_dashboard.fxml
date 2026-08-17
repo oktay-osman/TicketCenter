@@ -84,6 +84,18 @@
                         </GridPane>
                     </VBox>
 
+                    <Label text="Notifications" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                    <VBox spacing="10" style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 16; -fx-border-color: #e5e5e5; -fx-border-radius: 8;">
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label fx:id="unreadNotificationsLabel" text="Unread: 0" style="-fx-font-weight: bold;"/>
+                            <Pane HBox.hgrow="ALWAYS"/>
+                            <Button text="Refresh" onAction="#handleRefreshNotifications"/>
+                            <Button text="Mark Selected Read" onAction="#handleMarkSelectedNotificationRead"/>
+                            <Button text="Mark All Read" onAction="#handleMarkAllNotificationsRead"/>
+                        </HBox>
+                        <ListView fx:id="notificationsList" prefHeight="150"/>
+                    </VBox>
+
                     <Label text="Recent Sales" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
                     <ListView fx:id="recentSalesList" VBox.vgrow="ALWAYS"/>
                 </VBox>

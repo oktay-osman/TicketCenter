@@ -22,4 +22,7 @@ public interface TicketSaleRepository extends JpaRepository<TicketSale, Long> {
 
     @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM TicketSaleItem i")
     Long getTotalTicketsSold();
+
+    @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM TicketSaleItem i WHERE i.ticketSale.event = :event")
+    Long getTicketsSoldForEvent(@Param("event") Event event);
 }
