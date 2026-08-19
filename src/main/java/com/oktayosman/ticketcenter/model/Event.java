@@ -47,7 +47,7 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<SeatType> seatTypes;
 
-    @Column(name = "organizer_id", nullable = false)
+    @Column(name = "organizer_id")
     private Integer organizerLegacyId;
 
     @ManyToOne(fetch = FetchType.LAZY)
