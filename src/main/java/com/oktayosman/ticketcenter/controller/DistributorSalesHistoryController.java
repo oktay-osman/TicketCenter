@@ -20,8 +20,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -32,16 +36,21 @@ public class DistributorSalesHistoryController {
     @FXML private TableView<TicketSale> salesTable;
     @FXML private TableColumn<TicketSale, String> dateColumn;
     @FXML private TableColumn<TicketSale, String> eventColumn;
+    @FXML private TableColumn<TicketSale, String> eventCategoryColumn;
     @FXML private TableColumn<TicketSale, String> buyerFirstNameColumn;
     @FXML private TableColumn<TicketSale, String> buyerLastNameColumn;
     @FXML private TableColumn<TicketSale, String> buyerEmailColumn;
     @FXML private TableColumn<TicketSale, String> totalAmountColumn;
     @FXML private TextField searchField;
     @FXML private ComboBox<String> eventFilterComboBox;
+    @FXML private DatePicker fromDatePicker;
+    @FXML private DatePicker toDatePicker;
+    @FXML private Label ratingLabel;
     @FXML private Label totalSalesCountLabel;
     @FXML private Label totalRevenueLabel;
     @FXML private Label avgSaleValueLabel;
     @FXML private Label totalTicketsLabel;
+    @FXML private ListView<String> categoryBreakdownList;
 
     private final DistributorService distributorService;
     private final EventService eventService;
@@ -70,8 +79,10 @@ public class DistributorSalesHistoryController {
 
         setupTableColumns();
         setupFilters();
+
         if (currentDistributor != null) {
             loadSales();
+            loadRating();
         }
         loadEventFilter();
     }
@@ -86,6 +97,8 @@ public class DistributorSalesHistoryController {
             eventFilterComboBox.getItems().clear();
             eventFilterComboBox.setValue(null);
         }
+        if (fromDatePicker != null) fromDatePicker.setValue(null);
+        if (toDatePicker != null) toDatePicker.setValue(null);
     }
 
     private void setupTableColumns() {
@@ -94,6 +107,11 @@ public class DistributorSalesHistoryController {
 
         eventColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getEvent().getName()));
+
+        eventCategoryColumn.setCellValueFactory(cellData -> {
+            var category = cellData.getValue().getEvent().getCategory();
+            return new SimpleStringProperty(category != null ? category.toString() : "");
+        });
 
         buyerFirstNameColumn.setCellValueFactory(new PropertyValueFactory<>("buyerFirstName"));
         buyerLastNameColumn.setCellValueFactory(new PropertyValueFactory<>("buyerLastName"));
@@ -109,12 +127,20 @@ public class DistributorSalesHistoryController {
     private void setupFilters() {
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilter());
         eventFilterComboBox.valueProperty().addListener((obs, oldValue, newValue) -> applyFilter());
+        if (fromDatePicker != null) {
+            fromDatePicker.valueProperty().addListener((obs, oldValue, newValue) -> applyFilter());
+        }
+        if (toDatePicker != null) {
+            toDatePicker.valueProperty().addListener((obs, oldValue, newValue) -> applyFilter());
+        }
     }
 
     private void applyFilter() {
         filteredSales.setPredicate(sale -> {
             String searchText = searchField.getText().toLowerCase(Locale.ROOT);
             String eventFilter = eventFilterComboBox.getValue();
+            LocalDate from = fromDatePicker != null ? fromDatePicker.getValue() : null;
+            LocalDate to = toDatePicker != null ? toDatePicker.getValue() : null;
 
             boolean matchesSearch = searchText.isEmpty() ||
                     sale.getBuyerFirstName().toLowerCase(Locale.ROOT).contains(searchText) ||
@@ -124,7 +150,11 @@ public class DistributorSalesHistoryController {
             boolean matchesEventFilter = eventFilter == null || eventFilter.isEmpty() ||
                     sale.getEvent().getName().equals(eventFilter);
 
-            return matchesSearch && matchesEventFilter;
+            LocalDate saleDate = sale.getCreatedAt().toLocalDate();
+            boolean matchesFrom = from == null || !saleDate.isBefore(from);
+            boolean matchesTo = to == null || !saleDate.isAfter(to);
+
+            return matchesSearch && matchesEventFilter && matchesFrom && matchesTo;
         });
 
         updateSummary();
@@ -134,9 +164,13 @@ public class DistributorSalesHistoryController {
         masterSales.clear();
         List<TicketSale> sales = distributorService.getDistributorSales(currentDistributor);
         masterSales.addAll(sales);
-
-
         updateSummary();
+    }
+
+    private void loadRating() {
+        if (ratingLabel == null || currentDistributor == null) return;
+        Float rating = currentDistributor.getRating();
+        ratingLabel.setText(rating != null ? String.format("%.1f / 5", rating) : "Not rated yet");
     }
 
     private void loadEventFilter() {
@@ -166,7 +200,9 @@ public class DistributorSalesHistoryController {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         totalRevenueLabel.setText(String.format("€%.2f", totalRevenue));
 
-        BigDecimal avgSaleValue = totalCount > 0 ? totalRevenue.divide(new BigDecimal(totalCount), 2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        BigDecimal avgSaleValue = totalCount > 0
+                ? totalRevenue.divide(new BigDecimal(totalCount), 2, java.math.RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
         avgSaleValueLabel.setText(String.format("€%.2f", avgSaleValue));
 
         int totalTickets = displayedSales.stream()
@@ -174,6 +210,46 @@ public class DistributorSalesHistoryController {
                 .mapToInt(item -> item.getQuantity())
                 .sum();
         totalTicketsLabel.setText(String.valueOf(totalTickets));
+
+        updateCategoryBreakdown(displayedSales);
+    }
+
+    private void updateCategoryBreakdown(List<TicketSale> sales) {
+        if (categoryBreakdownList == null) return;
+
+        Map<String, long[]> categoryData = new LinkedHashMap<>();
+        for (TicketSale sale : sales) {
+            var category = sale.getEvent().getCategory();
+            String cat = category != null ? category.toString() : "UNKNOWN";
+            categoryData.computeIfAbsent(cat, k -> new long[2]);
+            categoryData.get(cat)[0]++;
+            categoryData.get(cat)[1] += sale.getTotalAmount().longValue();
+        }
+
+        if (categoryData.isEmpty()) {
+            categoryBreakdownList.setItems(FXCollections.observableArrayList("No sales in current filter."));
+            return;
+        }
+
+        // Recompute revenue per category using BigDecimal for accuracy
+        Map<String, BigDecimal[]> categoryRevenue = new LinkedHashMap<>();
+        for (TicketSale sale : sales) {
+            var category = sale.getEvent().getCategory();
+            String cat = category != null ? category.toString() : "UNKNOWN";
+            categoryRevenue.computeIfAbsent(cat, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+            categoryRevenue.get(cat)[0] = categoryRevenue.get(cat)[0].add(BigDecimal.ONE);
+            categoryRevenue.get(cat)[1] = categoryRevenue.get(cat)[1].add(sale.getTotalAmount());
+        }
+
+        List<String> rows = categoryRevenue.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> String.format("%-20s  %3s sales   €%.2f",
+                        e.getKey(),
+                        e.getValue()[0].intValue(),
+                        e.getValue()[1]))
+                .collect(Collectors.toList());
+
+        categoryBreakdownList.setItems(FXCollections.observableArrayList(rows));
     }
 
     @FXML
@@ -181,8 +257,19 @@ public class DistributorSalesHistoryController {
         masterSales.clear();
         eventFilterComboBox.getItems().clear();
         searchField.clear();
+        if (fromDatePicker != null) fromDatePicker.setValue(null);
+        if (toDatePicker != null) toDatePicker.setValue(null);
         loadSales();
         loadEventFilter();
+        loadRating();
+    }
+
+    @FXML
+    public void handleClearFilters() {
+        searchField.clear();
+        eventFilterComboBox.setValue(null);
+        if (fromDatePicker != null) fromDatePicker.setValue(null);
+        if (toDatePicker != null) toDatePicker.setValue(null);
     }
 
     @FXML

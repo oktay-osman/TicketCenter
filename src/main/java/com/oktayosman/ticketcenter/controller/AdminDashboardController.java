@@ -129,7 +129,18 @@ public class AdminDashboardController {
 
     @FXML
     public void handleViewReports(ActionEvent actionEvent) {
-        // TODO: Phase 5 — Reports
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin_reports.fxml"));
+            loader.setControllerFactory(SpringContext::getBean);
+            Parent root = loader.load();
+
+            AdminReportsController controller = loader.getController();
+            controller.setOnBack(this::showDashboardOverview);
+
+            contentHost.getChildren().setAll(root);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load admin reports view", e);
+        }
     }
 
     @FXML

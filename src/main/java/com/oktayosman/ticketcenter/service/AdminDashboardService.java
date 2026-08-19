@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
 
+import org.springframework.dao.DataIntegrityViolationException;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
@@ -103,6 +105,17 @@ public class AdminDashboardService {
         Role role = roleRepository.findByName(normalizedRoleName)
                 .orElseThrow(() -> new IllegalStateException("Role not found: " + normalizedRoleName));
 
+        String oldRoleName = user.getRole() != null ? user.getRole().getName() : null;
+
+        // Clean up the old profile record when switching away from a role
+        if (!normalizedRoleName.equals(oldRoleName)) {
+            if (DISTRIBUTOR_ROLE_NAME.equals(oldRoleName)) {
+                removeDistributorProfile(userId);
+            } else if (ORGANIZER_ROLE_NAME.equals(oldRoleName)) {
+                removeOrganizerProfile(userId);
+            }
+        }
+
         user.setRole(role);
         User savedUser = userRepository.save(user);
 
@@ -132,6 +145,7 @@ public class AdminDashboardService {
 
         User user = new User(firstName, lastName, email, username, password, role);
         User savedUser = userRepository.save(user);
+        entityManager.flush();
 
         if (ORGANIZER_ROLE_NAME.equals(normalizedRoleName)) {
             Organizer organizer = new Organizer(savedUser,
@@ -166,6 +180,56 @@ public class AdminDashboardService {
             organizer.setCommission(commission);
         }
         organizerRepository.save(organizer);
+    }
+
+    public List<Event> getAllEvents() {
+        return eventRepository.findAll();
+    }
+
+    public long getTicketsSoldForEvent(Event event) {
+        Long count = ticketSaleRepository.getTicketsSoldForEvent(event);
+        return count != null ? count : 0L;
+    }
+
+    public BigDecimal getRevenueForEvent(Event event) {
+        BigDecimal revenue = ticketSaleRepository.getRevenueForEvent(event);
+        return revenue != null ? revenue : BigDecimal.ZERO;
+    }
+
+    public long getTicketsSoldForDistributor(Distributor distributor) {
+        Long count = ticketSaleRepository.getTicketsSoldForDistributor(distributor);
+        return count != null ? count : 0L;
+    }
+
+    public BigDecimal getRevenueForDistributor(Distributor distributor) {
+        BigDecimal revenue = ticketSaleRepository.getRevenueForDistributor(distributor);
+        return revenue != null ? revenue : BigDecimal.ZERO;
+    }
+
+    private void removeDistributorProfile(Long userId) {
+        distributorRepository.findByUser_Id(userId).ifPresent(distributor -> {
+            try {
+                distributorRepository.delete(distributor);
+                distributorRepository.flush();
+            } catch (DataIntegrityViolationException e) {
+                throw new IllegalStateException(
+                        "Cannot change role: this distributor has existing ticket sales or event assignments. " +
+                        "Remove those records first.");
+            }
+        });
+    }
+
+    private void removeOrganizerProfile(Long userId) {
+        organizerRepository.findById(userId).ifPresent(organizer -> {
+            try {
+                organizerRepository.delete(organizer);
+                organizerRepository.flush();
+            } catch (DataIntegrityViolationException e) {
+                throw new IllegalStateException(
+                        "Cannot change role: this organizer has existing events or ratings. " +
+                        "Remove those records first.");
+            }
+        });
     }
 
     private void ensureDistributorRecord(Long userId) {
