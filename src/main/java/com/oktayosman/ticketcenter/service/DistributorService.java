@@ -50,6 +50,7 @@ public class DistributorService {
         this.notificationService = notificationService;
     }
 
+    @Transactional
     public TicketSale createTicketSale(TicketSale ticketSale) {
         BigDecimal total = BigDecimal.ZERO;
         if (ticketSale.getItems() != null) {
@@ -106,6 +107,16 @@ public class DistributorService {
 
     public List<Distributor> getAllDistributors() {
         return distributorRepository.findAll();
+    }
+
+    public long getTicketsSoldByEvent(Event event) {
+        Long count = ticketSaleRepository.getTicketsSoldForEvent(event);
+        return count != null ? count : 0L;
+    }
+
+    public BigDecimal getRevenueByEvent(Event event) {
+        BigDecimal revenue = ticketSaleRepository.getRevenueForEvent(event);
+        return revenue != null ? revenue : BigDecimal.ZERO;
     }
 
     public List<Event> getEventsForDistributor(Distributor distributor) {
