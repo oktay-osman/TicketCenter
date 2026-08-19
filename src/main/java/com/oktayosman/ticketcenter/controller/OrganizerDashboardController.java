@@ -100,6 +100,18 @@ public class OrganizerDashboardController {
     @FXML private Button markNotificationReadButton;
     @FXML private Button markAllNotificationsReadButton;
 
+    // REPORTS TAB
+    @FXML private TableView<EventReportRow> reportsTable;
+    @FXML private TableColumn<EventReportRow, String> reportNameColumn;
+    @FXML private TableColumn<EventReportRow, String> reportCategoryColumn;
+    @FXML private TableColumn<EventReportRow, String> reportDateColumn;
+    @FXML private TableColumn<EventReportRow, String> reportStatusColumn;
+    @FXML private TableColumn<EventReportRow, String> reportLocationColumn;
+    @FXML private TableColumn<EventReportRow, Long> reportTicketsSoldColumn;
+    @FXML private TableColumn<EventReportRow, String> reportRevenueColumn;
+    @FXML private Label reportTotalTicketsLabel;
+    @FXML private Label reportTotalRevenueLabel;
+
     // when non-null, submits will update the existing event instead of creating a new one
     private Long editingEventId = null;
 
@@ -180,6 +192,9 @@ public class OrganizerDashboardController {
         // Setup table columns for My Events tab
         setupEventsTable();
 
+        // Setup reports table columns
+        setupReportsTable();
+
         // Load events when tab is selected
         mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
             if (newTab == null) {
@@ -192,6 +207,8 @@ public class OrganizerDashboardController {
                 loadNotifications();
             } else if ("Profile".equals(tabText)) {
                 loadOrganizerProfile();
+            } else if ("Reports".equals(tabText)) {
+                loadOrganizerReport();
             }
         });
 
@@ -866,6 +883,47 @@ public class OrganizerDashboardController {
         loadOrganizerProfile();
     }
 
+    private void setupReportsTable() {
+        if (reportsTable == null) return;
+        reportNameColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("name"));
+        reportCategoryColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("category"));
+        reportDateColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("date"));
+        reportStatusColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("status"));
+        reportLocationColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("location"));
+        reportTicketsSoldColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("ticketsSold"));
+        reportRevenueColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("revenue"));
+    }
+
+    private void loadOrganizerReport() {
+        if (reportsTable == null) return;
+        try {
+            User user = SessionManager.getCurrentUser();
+            if (user == null) return;
+
+            Organizer organizer = organizerRepository.findById(user.getId()).orElse(null);
+            if (organizer == null) return;
+
+            List<Event> events = eventService.getEventsByOrganizer(organizer);
+            List<EventReportRow> rows = new ArrayList<>();
+            long totalTickets = 0;
+            java.math.BigDecimal totalRevenue = java.math.BigDecimal.ZERO;
+
+            for (Event event : events) {
+                long tickets = distributorService.getTicketsSoldByEvent(event);
+                java.math.BigDecimal revenue = distributorService.getRevenueByEvent(event);
+                rows.add(new EventReportRow(event, tickets, revenue, DATE_TIME_FORMATTER));
+                totalTickets += tickets;
+                totalRevenue = totalRevenue.add(revenue);
+            }
+
+            reportsTable.setItems(FXCollections.observableArrayList(rows));
+            if (reportTotalTicketsLabel != null) reportTotalTicketsLabel.setText(String.valueOf(totalTickets));
+            if (reportTotalRevenueLabel != null) reportTotalRevenueLabel.setText(String.format("€%.2f", totalRevenue));
+        } catch (Exception ex) {
+            showError("Failed to load report: " + ex.getMessage());
+        }
+    }
+
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
@@ -880,5 +938,34 @@ public class OrganizerDashboardController {
         String username = distributor.getUsername() != null ? distributor.getUsername() : "unknown";
         String fullName = (firstName + " " + lastName).trim();
         return fullName.isBlank() ? username : fullName + " (" + username + ")";
+    }
+
+    public static class EventReportRow {
+        private final String name;
+        private final String category;
+        private final String date;
+        private final String status;
+        private final String location;
+        private final long ticketsSold;
+        private final String revenue;
+
+        public EventReportRow(Event event, long ticketsSold, java.math.BigDecimal revenue,
+                              DateTimeFormatter formatter) {
+            this.name = event.getName() != null ? event.getName() : "";
+            this.category = event.getCategory() != null ? event.getCategory().toString() : "";
+            this.date = event.getEventDate() != null ? event.getEventDate().format(formatter) : "";
+            this.status = event.getStatus() != null ? event.getStatus().toString() : "";
+            this.location = event.getLocation() != null ? event.getLocation() : "";
+            this.ticketsSold = ticketsSold;
+            this.revenue = String.format("€%.2f", revenue);
+        }
+
+        public String getName() { return name; }
+        public String getCategory() { return category; }
+        public String getDate() { return date; }
+        public String getStatus() { return status; }
+        public String getLocation() { return location; }
+        public long getTicketsSold() { return ticketsSold; }
+        public String getRevenue() { return revenue; }
     }
 }
