@@ -23,7 +23,6 @@ public class Organizer {
 
     public Organizer(User user, String organizationName, Double commission) {
         this.user = user;
-        this.userId = user.getId();
         this.organizationName = organizationName;
         this.commission = commission;
     }
@@ -46,7 +45,6 @@ public class Organizer {
 
     public void setUser(User user) {
         this.user = user;
-        this.userId = user.getId();
     }
 
     public String getOrganizationName() {

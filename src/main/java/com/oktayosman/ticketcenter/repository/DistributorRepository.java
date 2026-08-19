@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface DistributorRepository extends JpaRepository<Distributor, Long> {
 	Optional<Distributor> findByUser_IdAndUser_Role_Name(Long userId, String roleName);
+	Optional<Distributor> findByUser_Id(Long userId);
 }
