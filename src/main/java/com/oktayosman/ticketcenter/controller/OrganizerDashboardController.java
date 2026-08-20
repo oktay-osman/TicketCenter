@@ -432,15 +432,6 @@ public class OrganizerDashboardController {
             System.out.println("[DEBUG] current session user id=" + user.getId() + " class=" + user.getClass().getName());
             System.out.println("[DEBUG] resolved organizer id=" + organizer.getId() + " class=" + organizer.getClass().getName());
 
-            // Resolve legacy organizer_id
-            Integer legacyId = organizerService.findLegacyOrganizerIdByUserId(user.getId());
-            if (legacyId != null) {
-                event.setOrganizerLegacyId(legacyId);
-                System.out.println("[DEBUG] resolved legacy organizer_id=" + legacyId);
-            } else {
-                System.out.println("[DEBUG] no legacy organizer_id found for user=" + user.getId());
-            }
-
             Event saved;
             Alert success = new Alert(Alert.AlertType.INFORMATION);
             success.setTitle("Success");

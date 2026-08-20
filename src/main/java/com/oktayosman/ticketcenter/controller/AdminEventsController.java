@@ -71,8 +71,9 @@ public class AdminEventsController {
                     && !e.getOrganizer().getUser().getUsername().isBlank()) {
                 return new SimpleStringProperty(e.getOrganizer().getUser().getUsername());
             }
-            if (e.getOrganizerLegacyId() != null) {
-                return new SimpleStringProperty("Organizer #" + e.getOrganizerLegacyId());
+            if (e.getOrganizer() != null && e.getOrganizer().getOrganizationName() != null
+                    && !e.getOrganizer().getOrganizationName().isBlank()) {
+                return new SimpleStringProperty(e.getOrganizer().getOrganizationName());
             }
             return new SimpleStringProperty("-");
         });
@@ -103,7 +104,7 @@ public class AdminEventsController {
                     || (e.getStatus() != null && contains(e.getStatus().toString(), text))
                     || (e.getOrganizer() != null && e.getOrganizer().getUser() != null
                         && contains(e.getOrganizer().getUser().getUsername(), text))
-                    || (e.getOrganizerLegacyId() != null && contains(String.valueOf(e.getOrganizerLegacyId()), text));
+                    || (e.getOrganizer() != null && contains(e.getOrganizer().getOrganizationName(), text));
         });
         totalEventsLabel.setText("Total: " + filteredEvents.size());
     }
