@@ -74,9 +74,6 @@ public class EventService {
         if (updatedEvent.getImagePath() != null && !updatedEvent.getImagePath().isBlank()) {
             existing.setImagePath(updatedEvent.getImagePath());
         }
-        if (updatedEvent.getOrganizerLegacyId() != null) {
-            existing.setOrganizerLegacyId(updatedEvent.getOrganizerLegacyId());
-        }
 
         // Merge seat types: replace the existing collection in-place so that
         // JPA orphanRemoval deletes removed entries and CascadeType.ALL inserts new ones.
