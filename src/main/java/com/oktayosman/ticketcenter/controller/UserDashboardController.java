@@ -227,6 +227,9 @@ public class UserDashboardController {
             Stage stage = new Stage();
             stage.setTitle(event.getName());
             stage.setScene(new Scene(root));
+            // Refresh the dashboard once the details dialog closes so any sales
+            // made (e.g. by a distributor) while it was open are reflected.
+            stage.setOnHidden(e -> performSearch());
             stage.show();
         } catch (IOException ex) {
             ex.printStackTrace();

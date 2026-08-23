@@ -1,6 +1,8 @@
 package com.oktayosman.ticketcenter.controller;
 
 import com.oktayosman.ticketcenter.model.Event;
+import com.oktayosman.ticketcenter.model.SeatType;
+import com.oktayosman.ticketcenter.service.EventService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -26,6 +28,8 @@ public class EventDetailsController {
     @FXML
     private Label capacityLabel;
     @FXML
+    private Label seatsAvailableLabel;
+    @FXML
     private Label ticketLimitLabel;
     @FXML
     private Label descriptionLabel;
@@ -36,10 +40,23 @@ public class EventDetailsController {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
+    private final EventService eventService;
+
     private Event event;
 
+    public EventDetailsController(EventService eventService) {
+        this.eventService = eventService;
+    }
+
     public void setEvent(Event event) {
-        this.event = event;
+        // Re-fetch from the database so seat counts reflect sales made
+        // (e.g. by a distributor) after this event was loaded into the dashboard list.
+        if (event != null && event.getId() != null) {
+            Event fresh = eventService.getEventById(event.getId());
+            this.event = fresh != null ? fresh : event;
+        } else {
+            this.event = event;
+        }
         populate();
     }
 
@@ -51,6 +68,7 @@ public class EventDetailsController {
         locationLabel.setText(event.getLocation() != null ? event.getLocation() : "");
         dateLabel.setText(event.getEventDate() != null ? event.getEventDate().format(DATE_TIME_FORMATTER) : "TBA");
         capacityLabel.setText(String.valueOf(event.getCapacity()));
+        seatsAvailableLabel.setText(String.valueOf(computeSeatsAvailable()));
         ticketLimitLabel.setText(String.valueOf(event.getTicketLimit()));
         descriptionLabel.setText(event.getDescription() != null ? event.getDescription() : "No description available");
 
@@ -78,6 +96,17 @@ public class EventDetailsController {
             // TODO: implement add-to-cart flow later. For now show a placeholder message.
             System.out.println("Add to cart clicked for event id=" + (event.getId() != null ? event.getId() : "<new>"));
         });
+    }
+
+    private int computeSeatsAvailable() {
+        if (event.getSeatTypes() == null || event.getSeatTypes().isEmpty()) {
+            return event.getCapacity();
+        }
+        int total = 0;
+        for (SeatType seatType : event.getSeatTypes()) {
+            total += seatType.getAvailableSeats();
+        }
+        return total;
     }
 
     private String resolveImageUrl(String imagePath) {
