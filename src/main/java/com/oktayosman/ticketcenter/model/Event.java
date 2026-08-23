@@ -47,9 +47,6 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<SeatType> seatTypes;
 
-    @Column(name = "organizer_id")
-    private Integer organizerLegacyId;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizer_user_id", nullable = false)
     private Organizer organizer;
@@ -65,6 +62,10 @@ public class Event {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Version
+    @Column(name = "version", columnDefinition = "bigint not null default 0")
+    private Long version;
 
     public Event() {}
 
@@ -145,14 +146,6 @@ public class Event {
         this.organizer = organizer;
     }
 
-    public Integer getOrganizerLegacyId() {
-        return organizerLegacyId;
-    }
-
-    public void setOrganizerLegacyId(Integer organizerLegacyId) {
-        this.organizerLegacyId = organizerLegacyId;
-    }
-
     public void setTickets(List<Ticket> tickets) {
         this.tickets = tickets;
     }
@@ -199,6 +192,10 @@ public class Event {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 
     @PrePersist

@@ -1,19 +1,25 @@
 package com.oktayosman.ticketcenter.service;
 
+import com.oktayosman.ticketcenter.exception.TicketInventoryException;
+import com.oktayosman.ticketcenter.exception.TicketLimitExceededException;
 import com.oktayosman.ticketcenter.model.*;
 import com.oktayosman.ticketcenter.repository.DistributorRatingRepository;
 import com.oktayosman.ticketcenter.repository.DistributorRepository;
 import com.oktayosman.ticketcenter.repository.EventDistributorRepository;
 import com.oktayosman.ticketcenter.repository.EventRepository;
 import com.oktayosman.ticketcenter.repository.OrganizerRepository;
+import com.oktayosman.ticketcenter.repository.SeatTypeRepository;
 import com.oktayosman.ticketcenter.repository.TicketSaleRepository;
 import com.oktayosman.ticketcenter.repository.TicketSaleItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 @Service
 public class DistributorService {
@@ -27,6 +33,7 @@ public class DistributorService {
     private final EventDistributorRepository eventDistributorRepository;
     private final TicketSaleRepository ticketSaleRepository;
     private final TicketSaleItemRepository ticketSaleItemRepository;
+    private final SeatTypeRepository seatTypeRepository;
     private final EventService eventService;
     private final NotificationService notificationService;
 
@@ -37,6 +44,7 @@ public class DistributorService {
                               EventDistributorRepository eventDistributorRepository,
                               TicketSaleRepository ticketSaleRepository,
                               TicketSaleItemRepository ticketSaleItemRepository,
+                              SeatTypeRepository seatTypeRepository,
                               EventService eventService,
                               NotificationService notificationService) {
         this.distributorRepository = distributorRepository;
@@ -46,18 +54,112 @@ public class DistributorService {
         this.eventDistributorRepository = eventDistributorRepository;
         this.ticketSaleRepository = ticketSaleRepository;
         this.ticketSaleItemRepository = ticketSaleItemRepository;
+        this.seatTypeRepository = seatTypeRepository;
         this.eventService = eventService;
         this.notificationService = notificationService;
     }
 
     @Transactional
     public TicketSale createTicketSale(TicketSale ticketSale) {
-        BigDecimal total = BigDecimal.ZERO;
-        if (ticketSale.getItems() != null) {
-            for (TicketSaleItem item : ticketSale.getItems()) {
-                total = total.add(item.getSubtotal());
+        if (ticketSale.getItems() == null || ticketSale.getItems().isEmpty()) {
+            throw new IllegalArgumentException("A ticket sale must contain at least one ticket.");
+        }
+        if (ticketSale.getEvent() == null || ticketSale.getEvent().getId() == null) {
+            throw new IllegalArgumentException("A ticket sale must be linked to an event.");
+        }
+
+        // Re-read the event under a write lock: the caller passes objects detached from
+        // an earlier load, so their seat counts may be stale, and the event-wide capacity
+        // check below is an aggregate that the per-seat-type locks would not protect.
+        // Locking the event first also fixes the lock order for every sale.
+        Event event = eventRepository.findByIdForUpdate(ticketSale.getEvent().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Event not found."));
+        ticketSale.setEvent(event);
+
+        // Collapse the requested quantities per seat type — the sale form allows several
+        // rows pointing at the same seat type, and checking them one by one would let a
+        // buyer split a request past the limits.
+        Map<Long, Integer> requestedBySeatTypeId = new TreeMap<>();
+        for (TicketSaleItem item : ticketSale.getItems()) {
+            if (item.getSeatType() == null || item.getSeatType().getId() == null) {
+                throw new IllegalArgumentException("Every ticket must have a ticket type.");
+            }
+            int quantity = item.getQuantity() != null ? item.getQuantity() : 0;
+            if (quantity <= 0) {
+                throw new IllegalArgumentException("Ticket quantities must be greater than 0.");
+            }
+            requestedBySeatTypeId.merge(item.getSeatType().getId(), quantity, Integer::sum);
+        }
+
+        int totalRequested = requestedBySeatTypeId.values().stream().mapToInt(Integer::intValue).sum();
+
+        // Lock the seat types in ascending id order (TreeMap) so concurrent sales that
+        // touch overlapping seat types cannot deadlock against each other.
+        Map<Long, SeatType> lockedSeatTypes = new HashMap<>();
+        for (Map.Entry<Long, Integer> entry : requestedBySeatTypeId.entrySet()) {
+            SeatType seatType = seatTypeRepository.findByIdForUpdate(entry.getKey())
+                    .orElseThrow(() -> new IllegalArgumentException("Ticket type no longer exists."));
+
+            if (seatType.getEvent() == null || !event.getId().equals(seatType.getEvent().getId())) {
+                throw new IllegalArgumentException("Ticket type does not belong to the selected event.");
+            }
+
+            int requested = entry.getValue();
+            int available = seatType.getAvailableSeats();
+            if (requested > available) {
+                throw new TicketInventoryException(String.format(
+                        "Only %d %s left for '%s' — you requested %d.",
+                        Math.max(available, 0), seatType.getSeatCategory().getDisplayName(),
+                        event.getName(), requested));
+            }
+            lockedSeatTypes.put(entry.getKey(), seatType);
+        }
+
+        // Per-person limit across every distributor selling this event.
+        if (event.getTicketLimit() > 0) {
+            String buyerEmail = ticketSale.getBuyerEmail() != null
+                    ? ticketSale.getBuyerEmail().trim().toLowerCase()
+                    : "";
+            Long alreadyBought = ticketSaleRepository.getTicketsSoldForEventAndBuyer(event, buyerEmail);
+            long buyerTotal = (alreadyBought != null ? alreadyBought : 0L) + totalRequested;
+            if (buyerTotal > event.getTicketLimit()) {
+                throw new TicketLimitExceededException(String.format(
+                        "'%s' allows %d tickets per person. %s already has %d, so %d more cannot be sold.",
+                        event.getName(), event.getTicketLimit(), ticketSale.getBuyerEmail(),
+                        alreadyBought != null ? alreadyBought : 0L, totalRequested));
             }
         }
+
+        // Event-wide capacity, on top of the per-seat-type totals.
+        if (event.getCapacity() > 0) {
+            long soldForEvent = getTicketsSoldByEvent(event);
+            if (soldForEvent + totalRequested > event.getCapacity()) {
+                throw new TicketInventoryException(String.format(
+                        "'%s' has %d of %d tickets left — you requested %d.",
+                        event.getName(), Math.max(event.getCapacity() - soldForEvent, 0),
+                        event.getCapacity(), totalRequested));
+            }
+        }
+
+        // Everything checks out: claim the inventory and price the sale from the
+        // persisted seat types rather than the values the form sent.
+        BigDecimal total = BigDecimal.ZERO;
+        for (TicketSaleItem item : ticketSale.getItems()) {
+            SeatType seatType = lockedSeatTypes.get(item.getSeatType().getId());
+            BigDecimal unitPrice = seatType.getPrice();
+            BigDecimal subtotal = unitPrice.multiply(new BigDecimal(item.getQuantity()));
+
+            item.setSeatType(seatType);
+            item.setUnitPrice(unitPrice);
+            item.setSubtotal(subtotal);
+            item.setTicketSale(ticketSale);
+            total = total.add(subtotal);
+        }
+        for (Map.Entry<Long, Integer> entry : requestedBySeatTypeId.entrySet()) {
+            SeatType seatType = lockedSeatTypes.get(entry.getKey());
+            seatType.setSoldSeats(seatType.getSoldSeats() + entry.getValue());
+        }
+
         ticketSale.setTotalAmount(total);
         TicketSale saved = ticketSaleRepository.save(ticketSale);
         notificationService.notifyOrganizerTicketsSold(saved);
@@ -84,8 +186,28 @@ public class DistributorService {
         return ticketSaleRepository.findById(id);
     }
 
+    @Transactional
     public void deleteTicketSale(Long id) {
-        ticketSaleRepository.deleteById(id);
+        TicketSale ticketSale = ticketSaleRepository.findById(id).orElse(null);
+        if (ticketSale == null) {
+            return;
+        }
+        // Release the inventory the sale was holding, otherwise the seats stay
+        // permanently unsellable.
+        if (ticketSale.getItems() != null) {
+            for (TicketSaleItem item : ticketSale.getItems()) {
+                if (item.getSeatType() == null || item.getSeatType().getId() == null) {
+                    continue;
+                }
+                SeatType seatType = seatTypeRepository.findByIdForUpdate(item.getSeatType().getId())
+                        .orElse(null);
+                if (seatType != null) {
+                    int quantity = item.getQuantity() != null ? item.getQuantity() : 0;
+                    seatType.setSoldSeats(Math.max(seatType.getSoldSeats() - quantity, 0));
+                }
+            }
+        }
+        ticketSaleRepository.delete(ticketSale);
     }
 
     public BigDecimal calculateSaleTotal(List<TicketSaleItem> items) {
