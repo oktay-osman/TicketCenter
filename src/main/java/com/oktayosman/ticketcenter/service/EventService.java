@@ -40,6 +40,10 @@ public class EventService {
         return eventRepository.findAllWithOrganizerUser();
     }
 
+    public Event getEventById(Long id) {
+        return eventRepository.findById(id).orElse(null);
+    }
+
     @Transactional
     public Event createEvent(Event event, Organizer organizer) {
         return createEvent(event, organizer, List.of());
