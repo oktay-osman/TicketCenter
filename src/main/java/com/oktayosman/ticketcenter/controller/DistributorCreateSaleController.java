@@ -1,5 +1,6 @@
 package com.oktayosman.ticketcenter.controller;
 
+import com.oktayosman.ticketcenter.exception.TicketInventoryException;
 import com.oktayosman.ticketcenter.model.*;
 import com.oktayosman.ticketcenter.service.DistributorService;
 import com.oktayosman.ticketcenter.service.EventService;
@@ -167,6 +168,10 @@ public class DistributorCreateSaleController {
                 }
             }).start();
 
+        } catch (TicketInventoryException e) {
+            // Covers TicketLimitExceededException too. These are expected outcomes and
+            // already carry a message written for the seller, so show it unprefixed.
+            showErrorMessage(e.getMessage());
         } catch (Exception e) {
             showErrorMessage("Error creating ticket sale: " + e.getMessage());
             e.printStackTrace();
@@ -264,6 +269,8 @@ public class DistributorCreateSaleController {
 
     // Inner class for ticket item rows
     public static class TicketItemRow {
+        private static final int DEFAULT_MAX_QUANTITY = 1000;
+
         private final Event event;
         private final DistributorCreateSaleController parent;
         private final HBox container;
@@ -291,7 +298,11 @@ public class DistributorCreateSaleController {
                 @Override
                 public String toString(SeatType seatType) {
                     if (seatType == null) return "";
-                    return seatType.getSeatCategory() + " - €" + seatType.getPrice();
+                    String label = seatType.getSeatCategory() + " - €" + seatType.getPrice();
+                    if (seatType.getTotalSeats() != null) {
+                        label += " (" + Math.max(seatType.getAvailableSeats(), 0) + " left)";
+                    }
+                    return label;
                 }
 
                 @Override
@@ -302,7 +313,8 @@ public class DistributorCreateSaleController {
 
             // Quantity Spinner — disabled until a seat type is chosen
             quantitySpinner = new Spinner<>();
-            quantitySpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 1000, 0, 1));
+            quantitySpinner.setValueFactory(
+                    new SpinnerValueFactory.IntegerSpinnerValueFactory(0, DEFAULT_MAX_QUANTITY, 0, 1));
             quantitySpinner.setPrefWidth(80);
             quantitySpinner.setEditable(true);
             quantitySpinner.setDisable(true);
@@ -316,9 +328,16 @@ public class DistributorCreateSaleController {
                 quantitySpinner.setDisable(newVal == null);
                 if (newVal == null) {
                     // Reset spinner and price when deselected
+                    setQuantityMax(DEFAULT_MAX_QUANTITY);
                     quantitySpinner.getValueFactory().setValue(0);
                     priceLabel.setText("€0.00");
                     parent.updateTotal();
+                } else {
+                    // Cap the spinner at what is still on sale. The service re-checks
+                    // this against the database, so this is guidance, not enforcement.
+                    setQuantityMax(newVal.getTotalSeats() == null
+                            ? DEFAULT_MAX_QUANTITY
+                            : Math.max(newVal.getAvailableSeats(), 0));
                 }
                 updatePrice();
             });
@@ -339,6 +358,15 @@ public class DistributorCreateSaleController {
             );
 
             HBox.setHgrow(seatTypeComboBox, javafx.scene.layout.Priority.ALWAYS);
+        }
+
+        private void setQuantityMax(int max) {
+            SpinnerValueFactory.IntegerSpinnerValueFactory factory =
+                    (SpinnerValueFactory.IntegerSpinnerValueFactory) quantitySpinner.getValueFactory();
+            factory.setMax(max);
+            if (factory.getValue() != null && factory.getValue() > max) {
+                factory.setValue(max);
+            }
         }
 
         private void updatePrice() {
