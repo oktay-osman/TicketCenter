@@ -9,8 +9,10 @@ import com.oktayosman.ticketcenter.repository.EventRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.oktayosman.ticketcenter.model.SeatCategory;
 import com.oktayosman.ticketcenter.model.SeatType;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,24 +76,8 @@ public class EventService {
         if (updatedEvent.getImagePath() != null && !updatedEvent.getImagePath().isBlank()) {
             existing.setImagePath(updatedEvent.getImagePath());
         }
-        if (updatedEvent.getOrganizerLegacyId() != null) {
-            existing.setOrganizerLegacyId(updatedEvent.getOrganizerLegacyId());
-        }
 
-        // Merge seat types: replace the existing collection in-place so that
-        // JPA orphanRemoval deletes removed entries and CascadeType.ALL inserts new ones.
-        if (existing.getSeatTypes() != null) {
-            existing.getSeatTypes().clear();
-        }
-        if (updatedEvent.getSeatTypes() != null && !updatedEvent.getSeatTypes().isEmpty()) {
-            if (existing.getSeatTypes() == null) {
-                existing.setSeatTypes(new ArrayList<>());
-            }
-            for (SeatType st : updatedEvent.getSeatTypes()) {
-                st.setEvent(existing);
-                existing.getSeatTypes().add(st);
-            }
-        }
+        mergeSeatTypes(existing, updatedEvent.getSeatTypes());
 
         existing.setOrganizer(organizer);
         Event savedEvent = eventRepository.save(existing);
@@ -140,6 +126,57 @@ public class EventService {
         }
         eventDistributorRepository.deleteByEvent(event);
         assignDistributorsToEvent(event, distributors);
+    }
+
+    /**
+     * Merges the seat types submitted by the organizer form into the persisted event,
+     * matching on seat category. Rows are updated in place rather than replaced so that
+     * the seat type id — and with it the sold seat counter and the ticket sale items
+     * referencing it — survive the edit.
+     */
+    private void mergeSeatTypes(Event existing, List<SeatType> submitted) {
+        if (existing.getSeatTypes() == null) {
+            existing.setSeatTypes(new ArrayList<>());
+        }
+
+        Map<SeatCategory, SeatType> submittedByCategory = new LinkedHashMap<>();
+        if (submitted != null) {
+            for (SeatType st : submitted) {
+                submittedByCategory.put(st.getSeatCategory(), st);
+            }
+        }
+
+        // Update or remove what the event already has.
+        Iterator<SeatType> iterator = existing.getSeatTypes().iterator();
+        while (iterator.hasNext()) {
+            SeatType current = iterator.next();
+            SeatType incoming = submittedByCategory.remove(current.getSeatCategory());
+
+            if (incoming == null) {
+                if (current.getSoldSeats() > 0) {
+                    throw new IllegalStateException(String.format(
+                            "Cannot remove %s — %d ticket(s) have already been sold for it.",
+                            current.getSeatCategory().getDisplayName(), current.getSoldSeats()));
+                }
+                iterator.remove();
+                continue;
+            }
+
+            if (incoming.getTotalSeats() != null && incoming.getTotalSeats() < current.getSoldSeats()) {
+                throw new IllegalStateException(String.format(
+                        "Cannot reduce %s to %d seats — %d have already been sold.",
+                        current.getSeatCategory().getDisplayName(),
+                        incoming.getTotalSeats(), current.getSoldSeats()));
+            }
+            current.setPrice(incoming.getPrice());
+            current.setTotalSeats(incoming.getTotalSeats());
+        }
+
+        // Whatever is left was not on the event before.
+        for (SeatType incoming : submittedByCategory.values()) {
+            incoming.setEvent(existing);
+            existing.getSeatTypes().add(incoming);
+        }
     }
 
     private List<Distributor> distinctDistributors(List<Distributor> distributors) {

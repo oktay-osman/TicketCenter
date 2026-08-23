@@ -25,6 +25,9 @@ public class SeatType {
     @Column(name = "total_seats")
     private Integer totalSeats;
 
+    @Column(name = "sold_seats", nullable = false, columnDefinition = "integer not null default 0")
+    private int soldSeats;
+
     public SeatType() {}
 
     public Long getId() {
@@ -61,5 +64,21 @@ public class SeatType {
 
     public void setTotalSeats(Integer totalSeats) {
         this.totalSeats = totalSeats;
+    }
+
+    public int getSoldSeats() {
+        return soldSeats;
+    }
+
+    public void setSoldSeats(int soldSeats) {
+        this.soldSeats = soldSeats;
+    }
+
+    /**
+     * Seats still on sale. A null totalSeats means the seat type is uncapped,
+     * which is how legacy rows created before inventory tracking behave.
+     */
+    public int getAvailableSeats() {
+        return totalSeats == null ? Integer.MAX_VALUE : totalSeats - soldSeats;
     }
 }
