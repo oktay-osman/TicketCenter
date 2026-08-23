@@ -63,6 +63,10 @@ public class Event {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Version
+    @Column(name = "version", columnDefinition = "bigint not null default 0")
+    private Long version;
+
     public Event() {}
 
     public Event(String name, String location, LocalDateTime eventDate, int ticketLimit, Organizer organizer) {
@@ -188,6 +192,10 @@ public class Event {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 
     @PrePersist

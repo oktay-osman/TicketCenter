@@ -29,6 +29,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import com.oktayosman.ticketcenter.util.SpringContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Controller;
 
 import java.io.File;
@@ -39,10 +40,12 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -323,6 +326,7 @@ public class OrganizerDashboardController {
 
             // Validate and collect seat types
             List<SeatType> seatTypesList = new ArrayList<>();
+            Set<SeatCategory> seenCategories = new HashSet<>();
             if (ticketTypesEntriesBox != null) {
                 for (Node child : ticketTypesEntriesBox.getChildren()) {
                     if (child == noTicketTypesLabel) continue;
@@ -335,6 +339,10 @@ public class OrganizerDashboardController {
 
                             if (seatCat == null) {
                                 errors.append("• Seat type category is required\n");
+                            } else if (!seenCategories.add(seatCat)) {
+                                // Seat types are matched by category when an event is
+                                // updated, so duplicates would be ambiguous.
+                                errors.append("• Duplicate ticket type: ").append(seatCat.getDisplayName()).append("\n");
                             }
                             if (priceStr == null || priceStr.isBlank()) {
                                 errors.append("• Seat type price is required\n");
@@ -457,6 +465,13 @@ public class OrganizerDashboardController {
             // Reload events in My Events tab if it exists
             loadOrganizerEvents();
 
+        } catch (ObjectOptimisticLockingFailureException ex) {
+            showError("This event was changed by someone else. Reload the list and try again.");
+            loadOrganizerEvents();
+        } catch (IllegalStateException ex) {
+            // Seat type merge conflicts (e.g. removing a type that already has sales)
+            // are expected outcomes and already carry a user-facing message.
+            showError(ex.getMessage());
         } catch (Exception ex) {
             showError("Error creating event: " + ex.getMessage());
         }

@@ -2,6 +2,7 @@ package com.oktayosman.ticketcenter.repository;
 
 import com.oktayosman.ticketcenter.model.Distributor;
 import com.oktayosman.ticketcenter.model.Event;
+import com.oktayosman.ticketcenter.model.SeatType;
 import com.oktayosman.ticketcenter.model.TicketSale;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,6 +32,13 @@ public interface TicketSaleRepository extends JpaRepository<TicketSale, Long> {
 
     @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM TicketSaleItem i WHERE i.ticketSale.event = :event")
     Long getTicketsSoldForEvent(@Param("event") Event event);
+
+    @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM TicketSaleItem i "
+            + "WHERE i.ticketSale.event = :event AND LOWER(i.ticketSale.buyerEmail) = :email")
+    Long getTicketsSoldForEventAndBuyer(@Param("event") Event event, @Param("email") String email);
+
+    @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM TicketSaleItem i WHERE i.seatType = :seatType")
+    Long getSoldQuantityForSeatType(@Param("seatType") SeatType seatType);
 
     @Query("SELECT COALESCE(SUM(s.totalAmount), 0) FROM TicketSale s WHERE s.event = :event")
     BigDecimal getRevenueForEvent(@Param("event") Event event);
