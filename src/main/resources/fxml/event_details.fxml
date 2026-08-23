@@ -36,8 +36,11 @@
                 <Label text="Capacity:" GridPane.rowIndex="3" GridPane.columnIndex="0" />
                 <Label fx:id="capacityLabel" GridPane.rowIndex="3" GridPane.columnIndex="1" />
 
-                <Label text="Ticket limit per person:" GridPane.rowIndex="4" GridPane.columnIndex="0" />
-                <Label fx:id="ticketLimitLabel" GridPane.rowIndex="4" GridPane.columnIndex="1" />
+                <Label text="Seats available:" GridPane.rowIndex="4" GridPane.columnIndex="0" />
+                <Label fx:id="seatsAvailableLabel" GridPane.rowIndex="4" GridPane.columnIndex="1" />
+
+                <Label text="Ticket limit per person:" GridPane.rowIndex="5" GridPane.columnIndex="0" />
+                <Label fx:id="ticketLimitLabel" GridPane.rowIndex="5" GridPane.columnIndex="1" />
             </GridPane>
 
             <Label text="Description:" style="-fx-font-weight:bold;" />
