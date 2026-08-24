@@ -15,11 +15,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @Service
 public class DistributorService {
@@ -35,7 +38,6 @@ public class DistributorService {
     private final TicketSaleItemRepository ticketSaleItemRepository;
     private final SeatTypeRepository seatTypeRepository;
     private final EventService eventService;
-    private final NotificationService notificationService;
 
     public DistributorService(DistributorRepository distributorRepository,
                               DistributorRatingRepository distributorRatingRepository,
@@ -45,8 +47,7 @@ public class DistributorService {
                               TicketSaleRepository ticketSaleRepository,
                               TicketSaleItemRepository ticketSaleItemRepository,
                               SeatTypeRepository seatTypeRepository,
-                              EventService eventService,
-                              NotificationService notificationService) {
+                              EventService eventService) {
         this.distributorRepository = distributorRepository;
         this.distributorRatingRepository = distributorRatingRepository;
         this.organizerRepository = organizerRepository;
@@ -56,7 +57,6 @@ public class DistributorService {
         this.ticketSaleItemRepository = ticketSaleItemRepository;
         this.seatTypeRepository = seatTypeRepository;
         this.eventService = eventService;
-        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -161,13 +161,42 @@ public class DistributorService {
         }
 
         ticketSale.setTotalAmount(total);
-        TicketSale saved = ticketSaleRepository.save(ticketSale);
-        notificationService.notifyOrganizerTicketsSold(saved);
-        return saved;
+        // Organizer sales notifications are a periodic digest now (NotificationService.sendPeriodicSalesDigests),
+        // not sent per-sale here.
+        return ticketSaleRepository.save(ticketSale);
     }
 
     public List<TicketSale> getDistributorSales(Distributor distributor) {
         return ticketSaleRepository.findByDistributor(distributor);
+    }
+
+    public List<TicketSale> getDistributorSalesInRange(Distributor distributor, LocalDateTime from, LocalDateTime to) {
+        return ticketSaleRepository.findByDistributorAndDateRange(distributor, from, to);
+    }
+
+    /**
+     * Groups sales by event category, formatted for display. Shared by the distributor's
+     * own sales-history screen and the admin distributor report so both show identical numbers.
+     */
+    public List<String> getCategoryBreakdownRows(List<TicketSale> sales) {
+        if (sales == null || sales.isEmpty()) {
+            return List.of("No sales in current filter.");
+        }
+
+        Map<String, BigDecimal[]> categoryRevenue = new LinkedHashMap<>();
+        for (TicketSale sale : sales) {
+            EventCategory category = sale.getEvent().getCategory();
+            String cat = category != null ? category.toString() : "UNKNOWN";
+            BigDecimal[] agg = categoryRevenue.computeIfAbsent(cat, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+            agg[0] = agg[0].add(BigDecimal.ONE);
+            agg[1] = agg[1].add(sale.getTotalAmount());
+        }
+
+        return categoryRevenue.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> String.format("%-20s  %3s sales   €%.2f",
+                        e.getKey(), e.getValue()[0].intValue(), e.getValue()[1]))
+                .collect(Collectors.toList());
     }
 
     public List<TicketSale> getDistributorSalesByEvent(Distributor distributor, Event event) {

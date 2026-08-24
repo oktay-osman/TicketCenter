@@ -3,14 +3,13 @@ package com.oktayosman.ticketcenter.service;
 import com.oktayosman.ticketcenter.model.Distributor;
 import com.oktayosman.ticketcenter.model.Event;
 import com.oktayosman.ticketcenter.model.Notification;
-import com.oktayosman.ticketcenter.model.Organizer;
-import com.oktayosman.ticketcenter.model.TicketSale;
 import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.repository.DistributorRepository;
 import com.oktayosman.ticketcenter.repository.EventRepository;
 import com.oktayosman.ticketcenter.repository.NotificationRepository;
 import com.oktayosman.ticketcenter.repository.OrganizerRepository;
 import com.oktayosman.ticketcenter.repository.TicketSaleRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,23 +57,32 @@ public class NotificationService {
         }
     }
 
+    /**
+     * Periodic digest (spec: "Periodic sales updates"), not a per-sale trigger — replaces
+     * the old real-time-on-every-sale notification. Sends the organizer one summary
+     * notification per event that received sales since the previous run.
+     */
+    private volatile LocalDateTime lastDigestRunAt = LocalDateTime.now();
+
+    @Scheduled(cron = "0 0 * * * *")
     @Transactional
-    public void notifyOrganizerTicketsSold(TicketSale ticketSale) {
-        if (ticketSale == null || ticketSale.getEvent() == null || ticketSale.getEvent().getOrganizer() == null) {
-            return;
-        }
+    public void sendPeriodicSalesDigests() {
+        LocalDateTime windowStart = lastDigestRunAt;
+        LocalDateTime windowEnd = LocalDateTime.now();
+        lastDigestRunAt = windowEnd;
 
-        Event event = ticketSale.getEvent();
-        Organizer organizer = event.getOrganizer();
-        if (organizer.getUser() == null) {
-            return;
-        }
+        List<Event> eventsWithNewSales = ticketSaleRepository.findEventsWithSalesBetween(windowStart, windowEnd);
+        for (Event event : eventsWithNewSales) {
+            if (event == null || event.getOrganizer() == null || event.getOrganizer().getUser() == null) {
+                continue;
+            }
 
-        Long soldTickets = ticketSaleRepository.getTicketsSoldForEvent(event);
-        String distributorName = ticketSale.getDistributor() != null ? ticketSale.getDistributor().getUsername() : "a distributor";
-        String message = "Ticket sale update for '" + event.getName() + "': " + soldTickets
-                + " tickets sold so far (latest sale by " + distributorName + ").";
-        createNotification(organizer.getUser(), event, message);
+            Long newTickets = ticketSaleRepository.getTicketsSoldForEventAndDateRange(event, windowStart, windowEnd);
+            Long totalTickets = ticketSaleRepository.getTicketsSoldForEvent(event);
+            String message = "Sales update for '" + event.getName() + "': " + newTickets
+                    + " tickets sold since the last update (" + totalTickets + " total so far).";
+            createNotification(event.getOrganizer().getUser(), event, message);
+        }
     }
 
     @Transactional

@@ -2,17 +2,24 @@ package com.oktayosman.ticketcenter.controller;
 
 import com.oktayosman.ticketcenter.model.Distributor;
 import com.oktayosman.ticketcenter.model.Event;
+import com.oktayosman.ticketcenter.model.TicketSale;
 import com.oktayosman.ticketcenter.service.AdminDashboardService;
+import com.oktayosman.ticketcenter.service.DistributorService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +28,9 @@ import java.util.List;
 public class AdminReportsController {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    @FXML private DatePicker fromDatePicker;
+    @FXML private DatePicker toDatePicker;
 
     // Events Report
     @FXML private TableView<EventReportRow> eventsTable;
@@ -42,13 +52,17 @@ public class AdminReportsController {
     @FXML private TableColumn<DistributorReportRow, String> distRatingColumn;
     @FXML private TableColumn<DistributorReportRow, String> distTicketsSoldColumn;
     @FXML private TableColumn<DistributorReportRow, String> distRevenueColumn;
+    @FXML private ListView<String> distCategoryBreakdownList;
 
     private final AdminDashboardService adminDashboardService;
+    private final DistributorService distributorService;
     private Runnable onBack;
 
     @Autowired
-    public AdminReportsController(AdminDashboardService adminDashboardService) {
+    public AdminReportsController(AdminDashboardService adminDashboardService,
+                                  DistributorService distributorService) {
         this.adminDashboardService = adminDashboardService;
+        this.distributorService = distributorService;
     }
 
     public void setOnBack(Runnable onBack) {
@@ -59,6 +73,15 @@ public class AdminReportsController {
     public void initialize() {
         setupEventsTable();
         setupDistributorsTable();
+        if (fromDatePicker != null) {
+            fromDatePicker.valueProperty().addListener((obs, oldValue, newValue) -> loadData());
+        }
+        if (toDatePicker != null) {
+            toDatePicker.valueProperty().addListener((obs, oldValue, newValue) -> loadData());
+        }
+        if (distributorsTable != null) {
+            distributorsTable.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> updateDistributorBreakdown(newValue));
+        }
         loadData();
     }
 
@@ -87,12 +110,21 @@ public class AdminReportsController {
     }
 
     private void loadEventsReport() {
+        LocalDate from = fromDatePicker != null ? fromDatePicker.getValue() : null;
+        LocalDate to = toDatePicker != null ? toDatePicker.getValue() : null;
+
         List<Event> events = adminDashboardService.getAllEvents();
         List<EventReportRow> rows = new ArrayList<>();
         long totalTickets = 0;
         BigDecimal totalRevenue = BigDecimal.ZERO;
 
         for (Event event : events) {
+            if (event.getEventDate() == null) continue;
+            LocalDate eventDate = event.getEventDate().toLocalDate();
+            boolean afterFrom = from == null || !eventDate.isBefore(from);
+            boolean beforeTo = to == null || !eventDate.isAfter(to);
+            if (!afterFrom || !beforeTo) continue;
+
             long tickets = adminDashboardService.getTicketsSoldForEvent(event);
             BigDecimal revenue = adminDashboardService.getRevenueForEvent(event);
             rows.add(new EventReportRow(event, tickets, revenue));
@@ -106,16 +138,53 @@ public class AdminReportsController {
     }
 
     private void loadDistributorsReport() {
+        LocalDate from = fromDatePicker != null ? fromDatePicker.getValue() : null;
+        LocalDate to = toDatePicker != null ? toDatePicker.getValue() : null;
+        LocalDateTime fromDateTime = from != null ? from.atStartOfDay() : null;
+        LocalDateTime toDateTime = to != null ? to.atTime(LocalTime.MAX) : null;
+
         List<Distributor> distributors = adminDashboardService.getAllDistributors();
         List<DistributorReportRow> rows = new ArrayList<>();
 
         for (Distributor distributor : distributors) {
-            long tickets = adminDashboardService.getTicketsSoldForDistributor(distributor);
-            BigDecimal revenue = adminDashboardService.getRevenueForDistributor(distributor);
+            List<TicketSale> sales = (fromDateTime != null || toDateTime != null)
+                    ? distributorService.getDistributorSalesInRange(distributor,
+                            fromDateTime != null ? fromDateTime : LocalDateTime.MIN,
+                            toDateTime != null ? toDateTime : LocalDateTime.MAX)
+                    : distributorService.getDistributorSales(distributor);
+
+            long tickets = sales.stream()
+                    .flatMap(s -> s.getItems().stream())
+                    .mapToLong(item -> item.getQuantity() != null ? item.getQuantity() : 0)
+                    .sum();
+            BigDecimal revenue = sales.stream()
+                    .map(TicketSale::getTotalAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
             rows.add(new DistributorReportRow(distributor, tickets, revenue));
         }
 
         distributorsTable.setItems(FXCollections.observableArrayList(rows));
+        if (distCategoryBreakdownList != null) {
+            distCategoryBreakdownList.setItems(FXCollections.observableArrayList("Select a distributor above."));
+        }
+    }
+
+    private void updateDistributorBreakdown(DistributorReportRow row) {
+        if (distCategoryBreakdownList == null) return;
+        if (row == null) {
+            distCategoryBreakdownList.setItems(FXCollections.observableArrayList("Select a distributor above."));
+            return;
+        }
+
+        LocalDate from = fromDatePicker != null ? fromDatePicker.getValue() : null;
+        LocalDate to = toDatePicker != null ? toDatePicker.getValue() : null;
+        List<TicketSale> sales = (from != null || to != null)
+                ? distributorService.getDistributorSalesInRange(row.getDistributor(),
+                        from != null ? from.atStartOfDay() : LocalDateTime.MIN,
+                        to != null ? to.atTime(LocalTime.MAX) : LocalDateTime.MAX)
+                : distributorService.getDistributorSales(row.getDistributor());
+
+        distCategoryBreakdownList.setItems(FXCollections.observableArrayList(distributorService.getCategoryBreakdownRows(sales)));
     }
 
     @FXML
@@ -126,6 +195,12 @@ public class AdminReportsController {
     @FXML
     public void handleRefresh() {
         loadData();
+    }
+
+    @FXML
+    public void handleClearDateRange() {
+        if (fromDatePicker != null) fromDatePicker.setValue(null);
+        if (toDatePicker != null) toDatePicker.setValue(null);
     }
 
     // ---- Inner data classes ----
@@ -159,6 +234,7 @@ public class AdminReportsController {
     }
 
     public class DistributorReportRow {
+        private final Distributor distributor;
         private final String name;
         private final String username;
         private final String commission;
@@ -167,6 +243,7 @@ public class AdminReportsController {
         private final String revenue;
 
         public DistributorReportRow(Distributor distributor, long ticketsSold, BigDecimal revenue) {
+            this.distributor = distributor;
             String firstName = distributor.getFirstName() != null ? distributor.getFirstName() : "";
             String lastName = distributor.getLastName() != null ? distributor.getLastName() : "";
             this.name = (firstName + " " + lastName).trim();
@@ -178,6 +255,7 @@ public class AdminReportsController {
             this.revenue = String.format("€%.2f", revenue);
         }
 
+        public Distributor getDistributor() { return distributor; }
         public String getName() { return name; }
         public String getUsername() { return username; }
         public String getCommission() { return commission; }

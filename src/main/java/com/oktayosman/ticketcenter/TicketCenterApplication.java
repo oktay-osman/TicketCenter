@@ -11,8 +11,10 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = "com.oktayosman.ticketcenter")
+@EnableScheduling
 public class TicketCenterApplication extends Application {
 
     private static final Logger logger = LogUtil.getLogger(TicketCenterApplication.class);
