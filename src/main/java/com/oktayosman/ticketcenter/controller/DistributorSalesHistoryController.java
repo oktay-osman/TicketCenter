@@ -22,10 +22,8 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -216,40 +214,7 @@ public class DistributorSalesHistoryController {
 
     private void updateCategoryBreakdown(List<TicketSale> sales) {
         if (categoryBreakdownList == null) return;
-
-        Map<String, long[]> categoryData = new LinkedHashMap<>();
-        for (TicketSale sale : sales) {
-            var category = sale.getEvent().getCategory();
-            String cat = category != null ? category.toString() : "UNKNOWN";
-            categoryData.computeIfAbsent(cat, k -> new long[2]);
-            categoryData.get(cat)[0]++;
-            categoryData.get(cat)[1] += sale.getTotalAmount().longValue();
-        }
-
-        if (categoryData.isEmpty()) {
-            categoryBreakdownList.setItems(FXCollections.observableArrayList("No sales in current filter."));
-            return;
-        }
-
-        // Recompute revenue per category using BigDecimal for accuracy
-        Map<String, BigDecimal[]> categoryRevenue = new LinkedHashMap<>();
-        for (TicketSale sale : sales) {
-            var category = sale.getEvent().getCategory();
-            String cat = category != null ? category.toString() : "UNKNOWN";
-            categoryRevenue.computeIfAbsent(cat, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
-            categoryRevenue.get(cat)[0] = categoryRevenue.get(cat)[0].add(BigDecimal.ONE);
-            categoryRevenue.get(cat)[1] = categoryRevenue.get(cat)[1].add(sale.getTotalAmount());
-        }
-
-        List<String> rows = categoryRevenue.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> String.format("%-20s  %3s sales   €%.2f",
-                        e.getKey(),
-                        e.getValue()[0].intValue(),
-                        e.getValue()[1]))
-                .collect(Collectors.toList());
-
-        categoryBreakdownList.setItems(FXCollections.observableArrayList(rows));
+        categoryBreakdownList.setItems(FXCollections.observableArrayList(distributorService.getCategoryBreakdownRows(sales)));
     }
 
     @FXML

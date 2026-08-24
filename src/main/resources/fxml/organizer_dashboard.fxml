@@ -160,6 +160,13 @@
             <Tab text="Reports">
                 <VBox spacing="15" style="-fx-padding: 20;">
                     <Label text="Event Reports" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="From:"/>
+                        <DatePicker fx:id="reportFromDatePicker" promptText="Start date" prefWidth="150"/>
+                        <Label text="To:"/>
+                        <DatePicker fx:id="reportToDatePicker" promptText="End date" prefWidth="150"/>
+                        <Button text="Clear" onAction="#handleClearReportDateRange"/>
+                    </HBox>
                     <TableView fx:id="reportsTable" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn text="Event Name" prefWidth="150" fx:id="reportNameColumn"/>

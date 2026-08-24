@@ -104,6 +104,8 @@ public class OrganizerDashboardController {
     @FXML private Button markAllNotificationsReadButton;
 
     // REPORTS TAB
+    @FXML private DatePicker reportFromDatePicker;
+    @FXML private DatePicker reportToDatePicker;
     @FXML private TableView<EventReportRow> reportsTable;
     @FXML private TableColumn<EventReportRow, String> reportNameColumn;
     @FXML private TableColumn<EventReportRow, String> reportCategoryColumn;
@@ -197,6 +199,12 @@ public class OrganizerDashboardController {
 
         // Setup reports table columns
         setupReportsTable();
+        if (reportFromDatePicker != null) {
+            reportFromDatePicker.valueProperty().addListener((obs, oldValue, newValue) -> loadOrganizerReport());
+        }
+        if (reportToDatePicker != null) {
+            reportToDatePicker.valueProperty().addListener((obs, oldValue, newValue) -> loadOrganizerReport());
+        }
 
         // Load events when tab is selected
         mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
@@ -910,6 +918,20 @@ public class OrganizerDashboardController {
             if (organizer == null) return;
 
             List<Event> events = eventService.getEventsByOrganizer(organizer);
+            java.time.LocalDate from = reportFromDatePicker != null ? reportFromDatePicker.getValue() : null;
+            java.time.LocalDate to = reportToDatePicker != null ? reportToDatePicker.getValue() : null;
+            if (from != null || to != null) {
+                events = events.stream()
+                        .filter(event -> {
+                            if (event.getEventDate() == null) return false;
+                            java.time.LocalDate eventDate = event.getEventDate().toLocalDate();
+                            boolean afterFrom = from == null || !eventDate.isBefore(from);
+                            boolean beforeTo = to == null || !eventDate.isAfter(to);
+                            return afterFrom && beforeTo;
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+            }
+
             List<EventReportRow> rows = new ArrayList<>();
             long totalTickets = 0;
             java.math.BigDecimal totalRevenue = java.math.BigDecimal.ZERO;
@@ -928,6 +950,12 @@ public class OrganizerDashboardController {
         } catch (Exception ex) {
             showError("Failed to load report: " + ex.getMessage());
         }
+    }
+
+    @FXML
+    public void handleClearReportDateRange(javafx.event.ActionEvent actionEvent) {
+        if (reportFromDatePicker != null) reportFromDatePicker.setValue(null);
+        if (reportToDatePicker != null) reportToDatePicker.setValue(null);
     }
 
     private void showError(String message) {

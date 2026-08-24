@@ -34,6 +34,15 @@ public interface TicketSaleRepository extends JpaRepository<TicketSale, Long> {
     Long getTicketsSoldForEvent(@Param("event") Event event);
 
     @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM TicketSaleItem i "
+            + "WHERE i.ticketSale.event = :event AND i.ticketSale.createdAt > :from AND i.ticketSale.createdAt <= :to")
+    Long getTicketsSoldForEventAndDateRange(@Param("event") Event event,
+                                            @Param("from") LocalDateTime from,
+                                            @Param("to") LocalDateTime to);
+
+    @Query("SELECT DISTINCT s.event FROM TicketSale s WHERE s.createdAt > :from AND s.createdAt <= :to")
+    List<Event> findEventsWithSalesBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM TicketSaleItem i "
             + "WHERE i.ticketSale.event = :event AND LOWER(i.ticketSale.buyerEmail) = :email")
     Long getTicketsSoldForEventAndBuyer(@Param("event") Event event, @Param("email") String email);
 

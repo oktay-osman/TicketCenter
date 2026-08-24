@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
@@ -21,6 +23,11 @@
             <Button text="Back" onAction="#handleBack" style="-fx-padding: 6px 14px;"/>
             <Label text="Reports" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
             <Region HBox.hgrow="ALWAYS"/>
+            <Label text="From:"/>
+            <DatePicker fx:id="fromDatePicker" promptText="Start date" prefWidth="150"/>
+            <Label text="To:"/>
+            <DatePicker fx:id="toDatePicker" promptText="End date" prefWidth="150"/>
+            <Button text="Clear" onAction="#handleClearDateRange" style="-fx-padding: 6px 14px;"/>
             <Button text="Refresh" onAction="#handleRefresh" style="-fx-padding: 6px 14px;"/>
         </HBox>
     </top>
@@ -68,6 +75,8 @@
                             <TableColumn text="Revenue" fx:id="distRevenueColumn" prefWidth="110"/>
                         </columns>
                     </TableView>
+                    <Label text="Tickets Sold by Event Type (select a distributor above)" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #374151;"/>
+                    <ListView fx:id="distCategoryBreakdownList" prefHeight="100"/>
                 </VBox>
             </Tab>
 
