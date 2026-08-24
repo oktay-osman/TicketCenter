@@ -51,9 +51,6 @@ public class Event {
     @JoinColumn(name = "organizer_user_id", nullable = false)
     private Organizer organizer;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
-    private List<Ticket> tickets;
-
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EventDistributor> distributorAssignments;
 
@@ -144,10 +141,6 @@ public class Event {
 
     public void setOrganizer(Organizer organizer) {
         this.organizer = organizer;
-    }
-
-    public void setTickets(List<Ticket> tickets) {
-        this.tickets = tickets;
     }
 
     public List<EventDistributor> getDistributorAssignments() {
