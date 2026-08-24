@@ -34,8 +34,6 @@ import javafx.collections.FXCollections;
 @Controller
 public class UserDashboardController {
     @FXML
-    public Button cartButton;
-    @FXML
     private TextField searchField;
 
     @FXML
@@ -254,9 +252,5 @@ public class UserDashboardController {
 
         Stage currentStage = (Stage) logoutButton.getScene().getWindow();
         currentStage.close();
-    }
-
-    public void handleCartClick(ActionEvent actionEvent) {
-        System.out.println("Cart button clicked.");
     }
 }

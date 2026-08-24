@@ -31,7 +31,6 @@
             <Region HBox.hgrow="ALWAYS" />
 
             <Label fx:id="greetingLabel" text="Hello, {first_name}" />
-            <Button fx:id="cartButton" text="🛒 Cart (0)" onAction="#handleCartClick" styleClass="button"/>
             <Button fx:id="logoutButton" text="Logout" onAction="#handleLogout" styleClass="button-logout"/>
         </HBox>
     </top>
