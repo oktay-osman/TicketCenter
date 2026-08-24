@@ -35,8 +35,6 @@ public class EventDetailsController {
     private Label descriptionLabel;
     @FXML
     private Button closeButton;
-    @FXML
-    private Button addToCartButton;
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -90,11 +88,6 @@ public class EventDetailsController {
         closeButton.setOnAction(e -> {
             Stage stage = (Stage) closeButton.getScene().getWindow();
             stage.close();
-        });
-
-        addToCartButton.setOnAction(e -> {
-            // TODO: implement add-to-cart flow later. For now show a placeholder message.
-            System.out.println("Add to cart clicked for event id=" + (event.getId() != null ? event.getId() : "<new>"));
         });
     }
 
