@@ -28,6 +28,10 @@ public class SeatType {
     @Column(name = "sold_seats", nullable = false, columnDefinition = "integer not null default 0")
     private int soldSeats;
 
+    @Version
+    @Column(name = "version", columnDefinition = "bigint not null default 0")
+    private Long version;
+
     public SeatType() {}
 
     public Long getId() {
@@ -72,6 +76,10 @@ public class SeatType {
 
     public void setSoldSeats(int soldSeats) {
         this.soldSeats = soldSeats;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 
     /**
