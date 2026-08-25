@@ -917,28 +917,21 @@ public class OrganizerDashboardController {
             Organizer organizer = organizerRepository.findById(user.getId()).orElse(null);
             if (organizer == null) return;
 
-            List<Event> events = eventService.getEventsByOrganizer(organizer);
             java.time.LocalDate from = reportFromDatePicker != null ? reportFromDatePicker.getValue() : null;
             java.time.LocalDate to = reportToDatePicker != null ? reportToDatePicker.getValue() : null;
-            if (from != null || to != null) {
-                events = events.stream()
-                        .filter(event -> {
-                            if (event.getEventDate() == null) return false;
-                            java.time.LocalDate eventDate = event.getEventDate().toLocalDate();
-                            boolean afterFrom = from == null || !eventDate.isBefore(from);
-                            boolean beforeTo = to == null || !eventDate.isAfter(to);
-                            return afterFrom && beforeTo;
-                        })
-                        .collect(java.util.stream.Collectors.toList());
-            }
+            List<Event> events = eventService.getEventsInRange(organizer, from, to);
+
+            Map<Long, DistributorService.EventSalesTotals> salesTotals = distributorService.getSalesTotalsByEvent(events);
 
             List<EventReportRow> rows = new ArrayList<>();
             long totalTickets = 0;
             java.math.BigDecimal totalRevenue = java.math.BigDecimal.ZERO;
 
             for (Event event : events) {
-                long tickets = distributorService.getTicketsSoldByEvent(event);
-                java.math.BigDecimal revenue = distributorService.getRevenueByEvent(event);
+                DistributorService.EventSalesTotals totalsForEvent = salesTotals.getOrDefault(
+                        event.getId(), new DistributorService.EventSalesTotals(0, java.math.BigDecimal.ZERO));
+                long tickets = totalsForEvent.ticketsSold();
+                java.math.BigDecimal revenue = totalsForEvent.revenue();
                 rows.add(new EventReportRow(event, tickets, revenue, DATE_TIME_FORMATTER));
                 totalTickets += tickets;
                 totalRevenue = totalRevenue.add(revenue);

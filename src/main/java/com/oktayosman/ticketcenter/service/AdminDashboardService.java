@@ -186,16 +186,6 @@ public class AdminDashboardService {
         return eventRepository.findAll();
     }
 
-    public long getTicketsSoldForEvent(Event event) {
-        Long count = ticketSaleRepository.getTicketsSoldForEvent(event);
-        return count != null ? count : 0L;
-    }
-
-    public BigDecimal getRevenueForEvent(Event event) {
-        BigDecimal revenue = ticketSaleRepository.getRevenueForEvent(event);
-        return revenue != null ? revenue : BigDecimal.ZERO;
-    }
-
     public long getTicketsSoldForDistributor(Distributor distributor) {
         Long count = ticketSaleRepository.getTicketsSoldForDistributor(distributor);
         return count != null ? count : 0L;
