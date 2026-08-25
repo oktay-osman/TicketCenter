@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 public interface TicketSaleRepository extends JpaRepository<TicketSale, Long> {
@@ -57,4 +58,28 @@ public interface TicketSaleRepository extends JpaRepository<TicketSale, Long> {
 
     @Query("SELECT COALESCE(SUM(s.totalAmount), 0) FROM TicketSale s WHERE s.distributor = :distributor")
     BigDecimal getRevenueForDistributor(@Param("distributor") Distributor distributor);
+
+    // Batched (grouped) variants used by report screens so they don't run two
+    // queries per row (see DistributorService.getSalesTotalsByEvent / getSalesTotalsByDistributors).
+    @Query("SELECT i.ticketSale.event.id, COALESCE(SUM(i.quantity), 0) FROM TicketSaleItem i "
+            + "WHERE i.ticketSale.event IN :events GROUP BY i.ticketSale.event.id")
+    List<Object[]> getTicketsSoldGroupedByEvent(@Param("events") Collection<Event> events);
+
+    @Query("SELECT s.event.id, COALESCE(SUM(s.totalAmount), 0) FROM TicketSale s "
+            + "WHERE s.event IN :events GROUP BY s.event.id")
+    List<Object[]> getRevenueGroupedByEvent(@Param("events") Collection<Event> events);
+
+    @Query("SELECT i.ticketSale.distributor.id, COALESCE(SUM(i.quantity), 0) FROM TicketSaleItem i "
+            + "WHERE i.ticketSale.distributor IN :distributors AND i.ticketSale.createdAt >= :from AND i.ticketSale.createdAt <= :to "
+            + "GROUP BY i.ticketSale.distributor.id")
+    List<Object[]> getTicketsSoldGroupedByDistributorInRange(@Param("distributors") Collection<Distributor> distributors,
+                                                             @Param("from") LocalDateTime from,
+                                                             @Param("to") LocalDateTime to);
+
+    @Query("SELECT s.distributor.id, COALESCE(SUM(s.totalAmount), 0) FROM TicketSale s "
+            + "WHERE s.distributor IN :distributors AND s.createdAt >= :from AND s.createdAt <= :to "
+            + "GROUP BY s.distributor.id")
+    List<Object[]> getRevenueGroupedByDistributorInRange(@Param("distributors") Collection<Distributor> distributors,
+                                                          @Param("from") LocalDateTime from,
+                                                          @Param("to") LocalDateTime to);
 }

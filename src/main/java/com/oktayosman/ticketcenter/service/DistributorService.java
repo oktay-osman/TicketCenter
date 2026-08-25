@@ -270,6 +270,70 @@ public class DistributorService {
         return revenue != null ? revenue : BigDecimal.ZERO;
     }
 
+    public record EventSalesTotals(long ticketsSold, BigDecimal revenue) {}
+
+    /**
+     * Batched equivalent of calling getTicketsSoldByEvent/getRevenueByEvent once per
+     * event — report screens used to do that in a loop (1 + 2N queries). This runs
+     * two grouped queries total and returns a lookup keyed by event id.
+     */
+    public Map<Long, EventSalesTotals> getSalesTotalsByEvent(List<Event> events) {
+        if (events == null || events.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> ticketsByEventId = new HashMap<>();
+        for (Object[] row : ticketSaleRepository.getTicketsSoldGroupedByEvent(events)) {
+            ticketsByEventId.put((Long) row[0], (Long) row[1]);
+        }
+        Map<Long, BigDecimal> revenueByEventId = new HashMap<>();
+        for (Object[] row : ticketSaleRepository.getRevenueGroupedByEvent(events)) {
+            revenueByEventId.put((Long) row[0], (BigDecimal) row[1]);
+        }
+
+        Map<Long, EventSalesTotals> totals = new HashMap<>();
+        for (Event event : events) {
+            long tickets = ticketsByEventId.getOrDefault(event.getId(), 0L);
+            BigDecimal revenue = revenueByEventId.getOrDefault(event.getId(), BigDecimal.ZERO);
+            totals.put(event.getId(), new EventSalesTotals(tickets, revenue));
+        }
+        return totals;
+    }
+
+    public record DistributorSalesTotals(long ticketsSold, BigDecimal revenue) {}
+
+    /**
+     * Batched equivalent of fetching each distributor's full sale list and summing it
+     * in Java — same 1 + 2N shape as getSalesTotalsByEvent, fixed the same way.
+     */
+    public Map<Long, DistributorSalesTotals> getSalesTotalsByDistributors(List<Distributor> distributors,
+                                                                          LocalDateTime from,
+                                                                          LocalDateTime to) {
+        if (distributors == null || distributors.isEmpty()) {
+            return Map.of();
+        }
+
+        LocalDateTime effectiveFrom = from != null ? from : LocalDateTime.MIN;
+        LocalDateTime effectiveTo = to != null ? to : LocalDateTime.MAX;
+
+        Map<Long, Long> ticketsByDistributorId = new HashMap<>();
+        for (Object[] row : ticketSaleRepository.getTicketsSoldGroupedByDistributorInRange(distributors, effectiveFrom, effectiveTo)) {
+            ticketsByDistributorId.put((Long) row[0], (Long) row[1]);
+        }
+        Map<Long, BigDecimal> revenueByDistributorId = new HashMap<>();
+        for (Object[] row : ticketSaleRepository.getRevenueGroupedByDistributorInRange(distributors, effectiveFrom, effectiveTo)) {
+            revenueByDistributorId.put((Long) row[0], (BigDecimal) row[1]);
+        }
+
+        Map<Long, DistributorSalesTotals> totals = new HashMap<>();
+        for (Distributor distributor : distributors) {
+            long tickets = ticketsByDistributorId.getOrDefault(distributor.getId(), 0L);
+            BigDecimal revenue = revenueByDistributorId.getOrDefault(distributor.getId(), BigDecimal.ZERO);
+            totals.put(distributor.getId(), new DistributorSalesTotals(tickets, revenue));
+        }
+        return totals;
+    }
+
     public List<Event> getEventsForDistributor(Distributor distributor) {
         return eventService.getEventsByDistributor(distributor);
     }
