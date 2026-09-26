@@ -64,7 +64,7 @@ FXML views live in `src/main/resources/fxml/` and are loaded with `SpringContext
 
 ### Prerequisites
 - Java 17
-- PostgreSQL running locally, with a `ticket_center` database
+- A PostgreSQL database (defaults to a shared Supabase instance; a local database also works)
 
 ### Configure the database
 Connection settings live in `src/main/resources/application.yml`:
@@ -72,10 +72,12 @@ Connection settings live in `src/main/resources/application.yml`:
 ```yaml
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/ticket_center
-    username: postgres
-    password: password
+    url: jdbc:postgresql://aws-1-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 ```
+
+Both `username` and `password` have no defaults and must be supplied via the `DB_USERNAME`/`DB_PASSWORD` environment variables. To use a local database instead, override `url` (or set `DB_USERNAME`/`DB_PASSWORD`) to point at your own instance.
 
 Schema is created and kept in sync automatically via `hibernate.ddl-auto: update` — no manual migrations needed.
 
