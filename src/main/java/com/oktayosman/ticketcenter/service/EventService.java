@@ -11,11 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.oktayosman.ticketcenter.model.SeatCategory;
 import com.oktayosman.ticketcenter.model.SeatType;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class EventService {
@@ -96,6 +98,32 @@ public class EventService {
 
     public List<Event> getEventsByOrganizer(Organizer organizer) {
         return eventRepository.findByOrganizer(organizer);
+    }
+
+    /**
+     * Shared by the organizer and admin report screens so both apply the same
+     * from/to semantics. organizer == null means "all events" (the admin case).
+     */
+    public List<Event> getEventsInRange(Organizer organizer, LocalDate from, LocalDate to) {
+        List<Event> events = organizer != null ? getEventsByOrganizer(organizer) : getAllEvents();
+        return filterByDateRange(events, from, to);
+    }
+
+    private List<Event> filterByDateRange(List<Event> events, LocalDate from, LocalDate to) {
+        if (from == null && to == null) {
+            return events;
+        }
+        return events.stream()
+                .filter(event -> {
+                    if (event.getEventDate() == null) {
+                        return false;
+                    }
+                    LocalDate eventDate = event.getEventDate().toLocalDate();
+                    boolean afterFrom = from == null || !eventDate.isBefore(from);
+                    boolean beforeTo = to == null || !eventDate.isAfter(to);
+                    return afterFrom && beforeTo;
+                })
+                .collect(Collectors.toList());
     }
 
     public List<Event> getEventsByDistributor(Distributor distributor) {

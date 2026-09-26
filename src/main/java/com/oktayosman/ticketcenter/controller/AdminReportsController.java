@@ -5,6 +5,7 @@ import com.oktayosman.ticketcenter.model.Event;
 import com.oktayosman.ticketcenter.model.TicketSale;
 import com.oktayosman.ticketcenter.service.AdminDashboardService;
 import com.oktayosman.ticketcenter.service.DistributorService;
+import com.oktayosman.ticketcenter.service.EventService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -23,6 +24,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class AdminReportsController {
@@ -56,13 +58,16 @@ public class AdminReportsController {
 
     private final AdminDashboardService adminDashboardService;
     private final DistributorService distributorService;
+    private final EventService eventService;
     private Runnable onBack;
 
     @Autowired
     public AdminReportsController(AdminDashboardService adminDashboardService,
-                                  DistributorService distributorService) {
+                                  DistributorService distributorService,
+                                  EventService eventService) {
         this.adminDashboardService = adminDashboardService;
         this.distributorService = distributorService;
+        this.eventService = eventService;
     }
 
     public void setOnBack(Runnable onBack) {
@@ -113,20 +118,18 @@ public class AdminReportsController {
         LocalDate from = fromDatePicker != null ? fromDatePicker.getValue() : null;
         LocalDate to = toDatePicker != null ? toDatePicker.getValue() : null;
 
-        List<Event> events = adminDashboardService.getAllEvents();
+        List<Event> events = eventService.getEventsInRange(null, from, to);
+        Map<Long, DistributorService.EventSalesTotals> salesTotals = distributorService.getSalesTotalsByEvent(events);
+
         List<EventReportRow> rows = new ArrayList<>();
         long totalTickets = 0;
         BigDecimal totalRevenue = BigDecimal.ZERO;
 
         for (Event event : events) {
-            if (event.getEventDate() == null) continue;
-            LocalDate eventDate = event.getEventDate().toLocalDate();
-            boolean afterFrom = from == null || !eventDate.isBefore(from);
-            boolean beforeTo = to == null || !eventDate.isAfter(to);
-            if (!afterFrom || !beforeTo) continue;
-
-            long tickets = adminDashboardService.getTicketsSoldForEvent(event);
-            BigDecimal revenue = adminDashboardService.getRevenueForEvent(event);
+            DistributorService.EventSalesTotals totalsForEvent = salesTotals.getOrDefault(
+                    event.getId(), new DistributorService.EventSalesTotals(0, BigDecimal.ZERO));
+            long tickets = totalsForEvent.ticketsSold();
+            BigDecimal revenue = totalsForEvent.revenue();
             rows.add(new EventReportRow(event, tickets, revenue));
             totalTickets += tickets;
             totalRevenue = totalRevenue.add(revenue);
@@ -144,23 +147,14 @@ public class AdminReportsController {
         LocalDateTime toDateTime = to != null ? to.atTime(LocalTime.MAX) : null;
 
         List<Distributor> distributors = adminDashboardService.getAllDistributors();
+        Map<Long, DistributorService.DistributorSalesTotals> salesTotals =
+                distributorService.getSalesTotalsByDistributors(distributors, fromDateTime, toDateTime);
+
         List<DistributorReportRow> rows = new ArrayList<>();
-
         for (Distributor distributor : distributors) {
-            List<TicketSale> sales = (fromDateTime != null || toDateTime != null)
-                    ? distributorService.getDistributorSalesInRange(distributor,
-                            fromDateTime != null ? fromDateTime : LocalDateTime.MIN,
-                            toDateTime != null ? toDateTime : LocalDateTime.MAX)
-                    : distributorService.getDistributorSales(distributor);
-
-            long tickets = sales.stream()
-                    .flatMap(s -> s.getItems().stream())
-                    .mapToLong(item -> item.getQuantity() != null ? item.getQuantity() : 0)
-                    .sum();
-            BigDecimal revenue = sales.stream()
-                    .map(TicketSale::getTotalAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            rows.add(new DistributorReportRow(distributor, tickets, revenue));
+            DistributorService.DistributorSalesTotals totalsForDistributor = salesTotals.getOrDefault(
+                    distributor.getId(), new DistributorService.DistributorSalesTotals(0, BigDecimal.ZERO));
+            rows.add(new DistributorReportRow(distributor, totalsForDistributor.ticketsSold(), totalsForDistributor.revenue()));
         }
 
         distributorsTable.setItems(FXCollections.observableArrayList(rows));
