@@ -313,15 +313,14 @@ public class DistributorService {
             return Map.of();
         }
 
-        LocalDateTime effectiveFrom = from != null ? from : LocalDateTime.MIN;
-        LocalDateTime effectiveTo = to != null ? to : LocalDateTime.MAX;
-
+        // from/to stay null when unbounded: the queries treat a null bound as "no bound".
+        // Sentinels like LocalDateTime.MIN/MAX overflow the Postgres timestamp range.
         Map<Long, Long> ticketsByDistributorId = new HashMap<>();
-        for (Object[] row : ticketSaleRepository.getTicketsSoldGroupedByDistributorInRange(distributors, effectiveFrom, effectiveTo)) {
+        for (Object[] row : ticketSaleRepository.getTicketsSoldGroupedByDistributorInRange(distributors, from, to)) {
             ticketsByDistributorId.put((Long) row[0], (Long) row[1]);
         }
         Map<Long, BigDecimal> revenueByDistributorId = new HashMap<>();
-        for (Object[] row : ticketSaleRepository.getRevenueGroupedByDistributorInRange(distributors, effectiveFrom, effectiveTo)) {
+        for (Object[] row : ticketSaleRepository.getRevenueGroupedByDistributorInRange(distributors, from, to)) {
             revenueByDistributorId.put((Long) row[0], (BigDecimal) row[1]);
         }
 

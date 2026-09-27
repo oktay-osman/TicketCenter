@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,13 @@ import java.util.Map;
 public class AdminReportsController {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    /**
+     * Last instant of a day at the microsecond resolution Postgres stores. LocalTime.MAX carries
+     * nanoseconds, which Postgres rounds up to the next midnight, silently widening an inclusive
+     * "to" bound into the following day.
+     */
+    private static final LocalTime END_OF_DAY = LocalTime.MAX.truncatedTo(ChronoUnit.MICROS);
 
     @FXML private DatePicker fromDatePicker;
     @FXML private DatePicker toDatePicker;
@@ -144,7 +152,7 @@ public class AdminReportsController {
         LocalDate from = fromDatePicker != null ? fromDatePicker.getValue() : null;
         LocalDate to = toDatePicker != null ? toDatePicker.getValue() : null;
         LocalDateTime fromDateTime = from != null ? from.atStartOfDay() : null;
-        LocalDateTime toDateTime = to != null ? to.atTime(LocalTime.MAX) : null;
+        LocalDateTime toDateTime = to != null ? to.atTime(END_OF_DAY) : null;
 
         List<Distributor> distributors = adminDashboardService.getAllDistributors();
         Map<Long, DistributorService.DistributorSalesTotals> salesTotals =
@@ -174,8 +182,8 @@ public class AdminReportsController {
         LocalDate to = toDatePicker != null ? toDatePicker.getValue() : null;
         List<TicketSale> sales = (from != null || to != null)
                 ? distributorService.getDistributorSalesInRange(row.getDistributor(),
-                        from != null ? from.atStartOfDay() : LocalDateTime.MIN,
-                        to != null ? to.atTime(LocalTime.MAX) : LocalDateTime.MAX)
+                        from != null ? from.atStartOfDay() : null,
+                        to != null ? to.atTime(END_OF_DAY) : null)
                 : distributorService.getDistributorSales(row.getDistributor());
 
         distCategoryBreakdownList.setItems(FXCollections.observableArrayList(distributorService.getCategoryBreakdownRows(sales)));
