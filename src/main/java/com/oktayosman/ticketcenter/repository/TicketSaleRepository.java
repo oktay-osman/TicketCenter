@@ -20,7 +20,8 @@ public interface TicketSaleRepository extends JpaRepository<TicketSale, Long> {
     List<TicketSale> findByEvent(Event event);
     List<TicketSale> findByDistributorAndEvent(Distributor distributor, Event event);
 
-    @Query("SELECT DISTINCT s FROM TicketSale s JOIN FETCH s.event LEFT JOIN FETCH s.items WHERE s.distributor = :distributor AND s.createdAt >= :from AND s.createdAt <= :to")
+    @Query("SELECT DISTINCT s FROM TicketSale s JOIN FETCH s.event LEFT JOIN FETCH s.items "
+            + "WHERE s.distributor = :distributor AND (CAST(:from AS LocalDateTime) IS NULL OR s.createdAt >= :from) AND (CAST(:to AS LocalDateTime) IS NULL OR s.createdAt <= :to)")
     List<TicketSale> findByDistributorAndDateRange(@Param("distributor") Distributor distributor,
                                                    @Param("from") LocalDateTime from,
                                                    @Param("to") LocalDateTime to);
@@ -70,14 +71,16 @@ public interface TicketSaleRepository extends JpaRepository<TicketSale, Long> {
     List<Object[]> getRevenueGroupedByEvent(@Param("events") Collection<Event> events);
 
     @Query("SELECT i.ticketSale.distributor.id, COALESCE(SUM(i.quantity), 0) FROM TicketSaleItem i "
-            + "WHERE i.ticketSale.distributor IN :distributors AND i.ticketSale.createdAt >= :from AND i.ticketSale.createdAt <= :to "
+            + "WHERE i.ticketSale.distributor IN :distributors "
+            + "AND (CAST(:from AS LocalDateTime) IS NULL OR i.ticketSale.createdAt >= :from) AND (CAST(:to AS LocalDateTime) IS NULL OR i.ticketSale.createdAt <= :to) "
             + "GROUP BY i.ticketSale.distributor.id")
     List<Object[]> getTicketsSoldGroupedByDistributorInRange(@Param("distributors") Collection<Distributor> distributors,
                                                              @Param("from") LocalDateTime from,
                                                              @Param("to") LocalDateTime to);
 
     @Query("SELECT s.distributor.id, COALESCE(SUM(s.totalAmount), 0) FROM TicketSale s "
-            + "WHERE s.distributor IN :distributors AND s.createdAt >= :from AND s.createdAt <= :to "
+            + "WHERE s.distributor IN :distributors "
+            + "AND (CAST(:from AS LocalDateTime) IS NULL OR s.createdAt >= :from) AND (CAST(:to AS LocalDateTime) IS NULL OR s.createdAt <= :to) "
             + "GROUP BY s.distributor.id")
     List<Object[]> getRevenueGroupedByDistributorInRange(@Param("distributors") Collection<Distributor> distributors,
                                                           @Param("from") LocalDateTime from,

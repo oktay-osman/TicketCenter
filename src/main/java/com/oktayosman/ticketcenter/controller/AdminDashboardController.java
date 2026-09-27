@@ -1,5 +1,6 @@
 package com.oktayosman.ticketcenter.controller;
 
+import com.oktayosman.ticketcenter.logging.LogUtil;
 import com.oktayosman.ticketcenter.service.AdminDashboardService;
 import com.oktayosman.ticketcenter.util.SessionManager;
 import com.oktayosman.ticketcenter.util.SpringContext;
@@ -9,17 +10,23 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 @Component
 public class AdminDashboardController {
+
+    private static final Logger logger = LogUtil.getLogger(AdminDashboardController.class);
+    private static final String NL = System.lineSeparator();
 
     @FXML private Label totalUsersLabel;
     @FXML private Label totalEventsLabel;
@@ -57,18 +64,46 @@ public class AdminDashboardController {
     }
 
     private void showUsersManagement() {
+        showView("/fxml/admin_users.fxml", "user management",
+                (AdminUsersController controller) -> controller.setOnBackToDashboard(this::showDashboardOverview));
+    }
+
+    /**
+     * Loads an FXML view into the content host. Any failure - including one thrown from the
+     * new controller's initialize(), which FXMLLoader rethrows as a LoadException rather than
+     * an IOException - is logged and shown to the admin instead of dying on the FX thread and
+     * leaving the button looking inert.
+     */
+    private <C> void showView(String fxmlPath, String description, Consumer<C> configureController) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin_users.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             loader.setControllerFactory(SpringContext::getBean);
-            Parent usersRoot = loader.load();
+            Parent root = loader.load();
 
-            AdminUsersController controller = loader.getController();
-            controller.setOnBackToDashboard(this::showDashboardOverview);
+            configureController.accept(loader.getController());
 
-            contentHost.getChildren().setAll(usersRoot);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load admin users view", e);
+            contentHost.getChildren().setAll(root);
+        } catch (IOException | RuntimeException e) {
+            logger.error("Failed to load {} view from {}", description, fxmlPath, e);
+            showError("Could not open " + description + "." + NL + NL + rootCauseMessage(e));
         }
+    }
+
+    private static String rootCauseMessage(Throwable t) {
+        Throwable cause = t;
+        while (cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+        }
+        String message = cause.getMessage();
+        return message != null && !message.isBlank() ? message : cause.getClass().getSimpleName();
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.show();
     }
 
     @FXML
@@ -78,69 +113,29 @@ public class AdminDashboardController {
 
     @FXML
     public void handleManageEvents(ActionEvent actionEvent) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin_events.fxml"));
-            loader.setControllerFactory(SpringContext::getBean);
-            Parent root = loader.load();
-
-            AdminEventsController controller = loader.getController();
-            controller.setOnBack(this::showDashboardOverview);
-
-            contentHost.getChildren().setAll(root);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load admin events view", e);
-        }
+        showView("/fxml/admin_events.fxml", "event management",
+                (AdminEventsController controller) -> controller.setOnBack(this::showDashboardOverview));
     }
 
     @FXML
     public void handleCreateAccount(ActionEvent actionEvent) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin_create_account.fxml"));
-            loader.setControllerFactory(SpringContext::getBean);
-            Parent root = loader.load();
-
-            AdminCreateAccountController controller = loader.getController();
-            controller.setOnBack(() -> {
-                loadDashboardData();
-                showDashboardOverview();
-            });
-
-            contentHost.getChildren().setAll(root);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load create account view", e);
-        }
+        showView("/fxml/admin_create_account.fxml", "account creation",
+                (AdminCreateAccountController controller) -> controller.setOnBack(() -> {
+                    loadDashboardData();
+                    showDashboardOverview();
+                }));
     }
 
     @FXML
     public void handleManageProfiles(ActionEvent actionEvent) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin_profiles.fxml"));
-            loader.setControllerFactory(SpringContext::getBean);
-            Parent root = loader.load();
-
-            AdminProfilesController controller = loader.getController();
-            controller.setOnBack(this::showDashboardOverview);
-
-            contentHost.getChildren().setAll(root);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load admin profiles view", e);
-        }
+        showView("/fxml/admin_profiles.fxml", "profile management",
+                (AdminProfilesController controller) -> controller.setOnBack(this::showDashboardOverview));
     }
 
     @FXML
     public void handleViewReports(ActionEvent actionEvent) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin_reports.fxml"));
-            loader.setControllerFactory(SpringContext::getBean);
-            Parent root = loader.load();
-
-            AdminReportsController controller = loader.getController();
-            controller.setOnBack(this::showDashboardOverview);
-
-            contentHost.getChildren().setAll(root);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load admin reports view", e);
-        }
+        showView("/fxml/admin_reports.fxml", "reports",
+                (AdminReportsController controller) -> controller.setOnBack(this::showDashboardOverview));
     }
 
     @FXML
@@ -155,8 +150,12 @@ public class AdminDashboardController {
             loginStage.setTitle("Login");
             loginStage.setScene(new Scene(root));
             loginStage.show();
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load login view", e);
+        } catch (IOException | RuntimeException e) {
+            // Keep the dashboard window open: closing it with no login window to replace it
+            // would leave the user with nothing on screen.
+            logger.error("Failed to load login view after logout", e);
+            showError("Could not return to the login screen." + NL + NL + rootCauseMessage(e));
+            return;
         }
 
         Node source = (Node) actionEvent.getSource();
