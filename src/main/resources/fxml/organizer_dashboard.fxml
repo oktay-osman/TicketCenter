@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane prefHeight="650.0" prefWidth="850.0"
-            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.oktayosman.ticketcenter.controller.OrganizerDashboardController"
             stylesheets="@../styles.css">
 
