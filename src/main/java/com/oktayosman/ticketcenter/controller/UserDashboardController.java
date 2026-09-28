@@ -50,6 +50,8 @@ public class UserDashboardController {
 
     private final EventService eventService;
 
+    private List<Event> events = List.of();
+
     public UserDashboardController(EventService eventService) {
         this.eventService = eventService;
     }
@@ -63,10 +65,13 @@ public class UserDashboardController {
             greetingLabel.setText("Hello, Guest");
         }
 
+        // Fetch events once; search and genre filtering work on this cached list
+        reloadEvents();
+
         // Populate genre filter dynamically from database events
         populateGenreFilter();
 
-        loadEvents();
+        performSearch();
 
         // Add dynamic search listener
         searchField.textProperty().addListener((observable, oldValue, newValue) -> performSearch());
@@ -77,11 +82,10 @@ public class UserDashboardController {
 
     private void populateGenreFilter() {
         // Get all unique categories from events
-        List<Event> allEvents = eventService.getAllEvents();
         Set<String> uniqueCategories = new TreeSet<>();
         uniqueCategories.add("All"); // Always add "All" as first option
 
-        for (Event event : allEvents) {
+        for (Event event : events) {
             if (event.getCategory() != null) {
                 uniqueCategories.add(event.getCategory().toString());
             }
@@ -102,17 +106,7 @@ public class UserDashboardController {
         }
 
         eventsTilePane.getChildren().clear();
-        if (searchQuery.isEmpty() && selectedGenre.equals("All")) {
-            loadEvents();
-        } else {
-            loadFilteredEvents(searchQuery, selectedGenre);
-        }
-    }
-
-    private void loadFilteredEvents(String searchQuery, String selectedGenre) {
-        eventsTilePane.getChildren().clear();
-        List<Event> allEvents = eventService.getAllEvents();
-        for (Event event : allEvents) {
+        for (Event event : events) {
             // Search in event name and description
             boolean matchesSearch = searchQuery.isEmpty() ||
                     event.getName().toLowerCase().contains(searchQuery) ||
@@ -129,13 +123,8 @@ public class UserDashboardController {
         }
     }
 
-    private void loadEvents() {
-        eventsTilePane.getChildren().clear();
-        List<Event> events = eventService.getAllEvents();
-        for (Event event : events) {
-            VBox eventCard = createEventCard(event);
-            eventsTilePane.getChildren().add(eventCard);
-        }
+    private void reloadEvents() {
+        events = eventService.getAllEvents();
     }
 
     private VBox createEventCard(Event event) {
@@ -227,7 +216,10 @@ public class UserDashboardController {
             stage.setScene(new Scene(root));
             // Refresh the dashboard once the details dialog closes so any sales
             // made (e.g. by a distributor) while it was open are reflected.
-            stage.setOnHidden(e -> performSearch());
+            stage.setOnHidden(e -> {
+                reloadEvents();
+                performSearch();
+            });
             stage.show();
         } catch (IOException ex) {
             ex.printStackTrace();

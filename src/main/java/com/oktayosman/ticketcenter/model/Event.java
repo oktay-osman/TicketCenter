@@ -2,6 +2,8 @@
 package com.oktayosman.ticketcenter.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -44,7 +46,9 @@ public class Event {
     @Column(name = "image_url", length = 255)
     private String imagePath;
 
+    // SUBSELECT loads seat types for every event in a result list with one query instead of one per event
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
     private List<SeatType> seatTypes;
 
     @ManyToOne(fetch = FetchType.LAZY)
