@@ -5,6 +5,7 @@ import com.oktayosman.ticketcenter.model.*;
 import com.oktayosman.ticketcenter.service.DistributorService;
 import com.oktayosman.ticketcenter.service.EventService;
 import com.oktayosman.ticketcenter.util.SessionManager;
+import com.oktayosman.ticketcenter.logging.LogUtil;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -14,6 +15,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +41,7 @@ public class DistributorCreateSaleController {
     private Distributor currentDistributor;
     private Map<String, Event> eventMap = new HashMap<>();
     private List<TicketItemRow> ticketItemRows = new ArrayList<>();
+    private static final Logger logger = LogUtil.getLogger(DistributorCreateSaleController.class);
 
     @Autowired
     public DistributorCreateSaleController(DistributorService distributorService,
@@ -164,7 +167,7 @@ public class DistributorCreateSaleController {
                     Thread.sleep(1000);
                     javafx.application.Platform.runLater(this::handleClose);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    logger.error("Error closing ticket sale dialog.", e);
                 }
             }).start();
 
@@ -174,7 +177,7 @@ public class DistributorCreateSaleController {
             showErrorMessage(e.getMessage());
         } catch (Exception e) {
             showErrorMessage("Error creating ticket sale: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error creating ticket sale.", e);
         }
     }
 

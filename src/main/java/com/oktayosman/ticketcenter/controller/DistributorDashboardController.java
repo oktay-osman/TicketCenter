@@ -8,6 +8,7 @@ import com.oktayosman.ticketcenter.service.DistributorService;
 import com.oktayosman.ticketcenter.service.NotificationService;
 import com.oktayosman.ticketcenter.util.SessionManager;
 import com.oktayosman.ticketcenter.util.SpringContext;
+import com.oktayosman.ticketcenter.logging.LogUtil;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -18,6 +19,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -54,6 +56,7 @@ public class DistributorDashboardController {
     private Distributor currentDistributor;
     private final Map<String, Long> unreadNotificationKeyToId = new LinkedHashMap<>();
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final Logger logger = LogUtil.getLogger(DistributorDashboardController.class);
 
     @Autowired
     public DistributorDashboardController(DistributorService distributorService,
@@ -89,7 +92,7 @@ public class DistributorDashboardController {
             }
         } catch (Exception e) {
             distributorLabel.setText("Error initializing dashboard: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error initializing distributor dashboard.", e);
         }
     }
 
@@ -214,7 +217,7 @@ public class DistributorDashboardController {
             stage.setOnHidden(event -> loadDashboardData());
             stage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Failed to load distributor create sale screen.", e);
         }
     }
 
@@ -230,7 +233,7 @@ public class DistributorDashboardController {
             stage.setTitle("Sales History");
             stage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Failed to load distributor sales history.", e);
         }
     }
 
@@ -247,7 +250,7 @@ public class DistributorDashboardController {
             stage.setTitle("TicketCenter - Login");
             stage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Failed to load login screen.", e);
         }
     }
 }
