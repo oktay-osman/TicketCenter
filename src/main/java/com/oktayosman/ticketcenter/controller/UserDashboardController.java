@@ -5,6 +5,7 @@ import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.service.EventService;
 import com.oktayosman.ticketcenter.util.SessionManager;
 import com.oktayosman.ticketcenter.util.SpringContext;
+import com.oktayosman.ticketcenter.logging.LogUtil;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -23,6 +24,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Controller;
 
 import java.io.IOException;
@@ -51,6 +53,8 @@ public class UserDashboardController {
     private final EventService eventService;
 
     private List<Event> events = List.of();
+
+    private static final Logger logger = LogUtil.getLogger(UserDashboardController.class);
 
     public UserDashboardController(EventService eventService) {
         this.eventService = eventService;
@@ -222,7 +226,7 @@ public class UserDashboardController {
             });
             stage.show();
         } catch (IOException ex) {
-            ex.printStackTrace();
+            logger.error("Failed to open event details.", ex);
         }
     }
 
@@ -239,7 +243,7 @@ public class UserDashboardController {
             loginStage.setScene(new Scene(root));
             loginStage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Failed to load login screen.", e);
         }
 
         Stage currentStage = (Stage) logoutButton.getScene().getWindow();
