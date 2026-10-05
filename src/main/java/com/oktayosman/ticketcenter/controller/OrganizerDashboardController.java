@@ -445,9 +445,6 @@ public class OrganizerDashboardController {
                 event.setSeatTypes(seatTypesList);
             }
 
-            System.out.println("[DEBUG] current session user id=" + user.getId() + " class=" + user.getClass().getName());
-            System.out.println("[DEBUG] resolved organizer id=" + organizer.getId() + " class=" + organizer.getClass().getName());
-
             Event saved;
             Alert success = new Alert(Alert.AlertType.INFORMATION);
             success.setTitle("Success");

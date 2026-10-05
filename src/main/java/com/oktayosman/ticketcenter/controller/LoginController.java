@@ -4,6 +4,7 @@ import com.oktayosman.ticketcenter.model.User;
 import com.oktayosman.ticketcenter.service.UserService;
 import com.oktayosman.ticketcenter.util.SessionManager;
 import com.oktayosman.ticketcenter.util.SpringContext;
+import com.oktayosman.ticketcenter.logging.LogUtil;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -14,6 +15,7 @@ import javafx.scene.paint.Color;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -39,6 +41,8 @@ public class LoginController {
 
     @FXML
     private TextField usernameTextField;
+
+    private static final Logger logger = LogUtil.getLogger(LoginController.class);
 
     @Autowired
     private UserService userService;
@@ -75,13 +79,13 @@ public class LoginController {
             // FXMLLoader wraps the real error; surface the root cause message
             Throwable rootCause = e.getCause() != null ? e.getCause() : e;
             showErrorMessage("Error loading dashboard: " + rootCause.getMessage());
-            e.printStackTrace();
+            logger.error("Error loading dashboard.", e);
         } catch (IllegalArgumentException e) {
             showErrorMessage("Invalid role: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Invalid role.", e);
         } catch (Exception e) {
             showErrorMessage("Unexpected error: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Unexpected error.", e);
         }
     }
 
@@ -90,7 +94,7 @@ public class LoginController {
         try {
             brandingImageView.setImage(new Image(getClass().getResourceAsStream("/images/logo.png")));
         } catch (Exception e) {
-            System.out.println("Error loading logo: " + e.getMessage());
+            logger.error("Error loading branding image.", e);
         }
         enterPasswordField.setOnAction(event -> loginButtonOnAction());
         usernameTextField.setOnAction(event -> loginButtonOnAction());
@@ -129,7 +133,7 @@ public class LoginController {
             stage.setTitle("Register");
             stage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Failed to load register screen.", e);
         }
     }
 
