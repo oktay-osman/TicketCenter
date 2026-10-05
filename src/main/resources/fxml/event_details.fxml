@@ -47,7 +47,7 @@
             <Label fx:id="descriptionLabel" wrapText="true" />
 
             <HBox spacing="10">
-                <Button fx:id="closeButton" text="Close" styleClass="button-logout" />
+                <Button fx:id="closeButton" text="Close" styleClass="button-secondary"/>
             </HBox>
         </VBox>
     </center>

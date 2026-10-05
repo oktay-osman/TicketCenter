@@ -25,7 +25,7 @@
             <Label text="Profiles Management" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
             <Region HBox.hgrow="ALWAYS"/>
             <Button text="Refresh" onAction="#handleRefresh"/>
-            <Button text="← Back to Dashboard" onAction="#handleBack" style="-fx-background-color: #6b7280; -fx-text-fill: white;"/>
+            <Button text="← Back to Dashboard" onAction="#handleBack" styleClass="button-secondary"/>
         </HBox>
     </top>
 
@@ -78,9 +78,8 @@
                         <HBox spacing="10" alignment="CENTER_RIGHT">
                             <Label fx:id="orgMessageLabel" text=""/>
                             <Region HBox.hgrow="ALWAYS"/>
-                            <Button text="Clear" onAction="#handleClearOrganizerSelection"/>
-                            <Button text="Save Changes" onAction="#handleSaveOrganizer"
-                                    style="-fx-background-color: #059669; -fx-text-fill: white;"/>
+                            <Button text="Clear" onAction="#handleClearOrganizerSelection" styleClass="button-secondary"/>
+                            <Button text="Save Changes" onAction="#handleSaveOrganizer"/>
                         </HBox>
                     </VBox>
                 </VBox>
@@ -125,9 +124,8 @@
                         <HBox spacing="10" alignment="CENTER_RIGHT">
                             <Label fx:id="distMessageLabel" text=""/>
                             <Region HBox.hgrow="ALWAYS"/>
-                            <Button text="Clear" onAction="#handleClearDistributorSelection"/>
-                            <Button text="Save Commission" onAction="#handleSaveDistributor"
-                                    style="-fx-background-color: #059669; -fx-text-fill: white;"/>
+                            <Button text="Clear" onAction="#handleClearDistributorSelection" styleClass="button-secondary"/>
+                            <Button text="Save Commission" onAction="#handleSaveDistributor"/>
                         </HBox>
                     </VBox>
                 </VBox>

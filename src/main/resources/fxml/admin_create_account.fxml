@@ -22,7 +22,7 @@
         <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 12; -fx-border-color: #e5e5e5; -fx-border-width: 0 0 1 0;">
             <Label text="Create User Account" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button text="← Back to Dashboard" onAction="#handleBack" style="-fx-background-color: #6b7280; -fx-text-fill: white;"/>
+            <Button text="← Back to Dashboard" onAction="#handleBack" styleClass="button-secondary"/>
         </HBox>
     </top>
 
@@ -104,9 +104,8 @@
             <Label fx:id="messageLabel" text="" wrapText="true" style="-fx-text-fill: #dc2626;"/>
 
             <HBox spacing="10" alignment="CENTER_RIGHT">
-                <Button text="Clear" onAction="#handleClear"/>
-                <Button text="Create Account" onAction="#handleSave"
-                        style="-fx-background-color: #059669; -fx-text-fill: white; -fx-font-weight: bold;"/>
+                <Button text="Clear" onAction="#handleClear" styleClass="button-secondary"/>
+                <Button text="Create Account" onAction="#handleSave"/>
             </HBox>
         </VBox>
     </center>

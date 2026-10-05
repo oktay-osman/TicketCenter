@@ -37,20 +37,44 @@
     -fx-text-fill: #333;
 }
 
-/* Button Styling */
+/* Button Styling
+ *
+ * Three roles - every button in the app should pick exactly one:
+ *   .button            blue  - primary actions (Refresh, Save, Login, Create)
+ *   .button-secondary  grey  - neutral actions (Back, Clear)
+ *   .button-logout     red   - leaving the session (Logout)
+ *
+ * .button is JavaFX's own default class, so a plain <Button/> is already primary.
+ * Each role needs its own :hover rule: a pseudo-class selector outranks a plain
+ * class one, so .button:hover alone would repaint every button blue on hover
+ * regardless of which role class it carries.
+ */
 .button {
     -fx-background-color: #007bff;
     -fx-text-fill: white;
     -fx-font-weight: bold;
 }
 
+.button:hover {
+    -fx-background-color: #0056b3;
+}
+
+.button-secondary {
+    -fx-background-color: #6b7280;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.button-secondary:hover {
+    -fx-background-color: #4b5563;
+}
+
 .button-logout {
     -fx-background-color: #dc3545;
     -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-size: 10px;
 }
 
-.button:hover {
-    -fx-background-color: #0056b3;
+.button-logout:hover {
+    -fx-background-color: #b02a37;
 }
