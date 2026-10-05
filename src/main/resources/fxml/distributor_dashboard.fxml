@@ -15,7 +15,8 @@
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.oktayosman.ticketcenter.controller.DistributorDashboardController"
-            prefWidth="1100.0" prefHeight="700.0">
+            prefWidth="1100.0" prefHeight="700.0"
+            stylesheets="@../styles.css">
 
     <top>
         <HBox spacing="10" style="-fx-padding: 10;">
@@ -23,7 +24,7 @@
             <Button text="My Sales" onAction="#handleViewSales"/>
             <Pane HBox.hgrow="ALWAYS"/>
             <Label fx:id="distributorLabel" text="Distributor Panel"/>
-            <Button text="Logout" onAction="#handleLogout"/>
+            <Button text="Logout" onAction="#handleLogout" styleClass="button-logout"/>
         </HBox>
     </top>
 

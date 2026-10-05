@@ -16,19 +16,20 @@
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.oktayosman.ticketcenter.controller.AdminReportsController"
-            prefWidth="1100.0" prefHeight="680.0">
+            prefWidth="1100.0" prefHeight="680.0"
+            stylesheets="@../styles.css">
 
     <top>
         <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 12;">
-            <Button text="Back" onAction="#handleBack" style="-fx-padding: 6px 14px;"/>
             <Label text="Reports" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
             <Region HBox.hgrow="ALWAYS"/>
             <Label text="From:"/>
             <DatePicker fx:id="fromDatePicker" promptText="Start date" prefWidth="150"/>
             <Label text="To:"/>
             <DatePicker fx:id="toDatePicker" promptText="End date" prefWidth="150"/>
-            <Button text="Clear" onAction="#handleClearDateRange" style="-fx-padding: 6px 14px;"/>
-            <Button text="Refresh" onAction="#handleRefresh" style="-fx-padding: 6px 14px;"/>
+            <Button text="Clear" onAction="#handleClearDateRange" styleClass="button-secondary"/>
+            <Button text="Refresh" onAction="#handleRefresh"/>
+            <Button text="← Back to Dashboard" onAction="#handleBack" styleClass="button-secondary"/>
         </HBox>
     </top>
 

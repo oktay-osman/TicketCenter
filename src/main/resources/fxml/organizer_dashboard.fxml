@@ -13,7 +13,7 @@
         <HBox spacing="10" style="-fx-padding: 10; -fx-alignment: CENTER_LEFT;">
             <Label text="Organizer Dashboard" style="-fx-text-fill: #2c3e50; -fx-font-size: 24px; -fx-font-weight: bold;"/>
             <Region HBox.hgrow="ALWAYS" />
-            <Button fx:id="logoutButton" text="Logout" />
+            <Button fx:id="logoutButton" text="Logout" styleClass="button-logout"/>
         </HBox>
     </top>
 
@@ -165,7 +165,7 @@
                         <DatePicker fx:id="reportFromDatePicker" promptText="Start date" prefWidth="150"/>
                         <Label text="To:"/>
                         <DatePicker fx:id="reportToDatePicker" promptText="End date" prefWidth="150"/>
-                        <Button text="Clear" onAction="#handleClearReportDateRange"/>
+                        <Button text="Clear" onAction="#handleClearReportDateRange" styleClass="button-secondary"/>
                     </HBox>
                     <TableView fx:id="reportsTable" VBox.vgrow="ALWAYS">
                         <columns>

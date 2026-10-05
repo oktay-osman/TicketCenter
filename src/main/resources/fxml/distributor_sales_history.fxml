@@ -18,7 +18,8 @@
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.oktayosman.ticketcenter.controller.DistributorSalesHistoryController"
-            prefWidth="1050.0" prefHeight="680.0">
+            prefWidth="1050.0" prefHeight="680.0"
+            stylesheets="@../styles.css">
 
     <top>
         <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 12;">
@@ -26,7 +27,7 @@
             <Region HBox.hgrow="ALWAYS"/>
             <Label text="Your Rating:" style="-fx-font-size: 13px; -fx-text-fill: #6b7280;"/>
             <Label fx:id="ratingLabel" text="—" style="-fx-font-size: 13px; -fx-font-weight: bold;"/>
-            <Button text="Close" onAction="#handleClose" style="-fx-padding: 8px 16px;"/>
+            <Button text="Close" onAction="#handleClose" styleClass="button-secondary" style="-fx-padding: 8px 16px;"/>
         </HBox>
     </top>
 
@@ -41,7 +42,7 @@
                 <TextField fx:id="searchField" promptText="Search by buyer name or email" HBox.hgrow="ALWAYS"/>
                 <ComboBox fx:id="eventFilterComboBox" prefWidth="200" promptText="Filter by event"/>
                 <Button text="Refresh" onAction="#handleRefresh" style="-fx-padding: 8px 16px;"/>
-                <Button text="Clear Filters" onAction="#handleClearFilters" style="-fx-padding: 8px 16px;"/>
+                <Button text="Clear Filters" onAction="#handleClearFilters" styleClass="button-secondary" style="-fx-padding: 8px 16px;"/>
             </HBox>
 
             <!-- Filter Row 2: Date Range -->

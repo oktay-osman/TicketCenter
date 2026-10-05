@@ -15,25 +15,26 @@
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.oktayosman.ticketcenter.controller.AdminDashboardController"
-            prefWidth="1100.0" prefHeight="700.0">
+            prefWidth="1100.0" prefHeight="700.0"
+            stylesheets="@../styles.css">
 
     <top>
         <HBox spacing="10" style="-fx-padding: 10;">
             <Button text="Users" onAction="#handleManageUsers"/>
             <Button text="Events" onAction="#handleManageEvents"/>
             <Button text="Profiles" onAction="#handleManageProfiles"/>
-            <Button text="Create Account" onAction="#handleCreateAccount" style="-fx-background-color: #059669; -fx-text-fill: white;"/>
+            <Button text="Create Account" onAction="#handleCreateAccount"/>
             <Button text="Reports" onAction="#handleViewReports"/>
             <Pane HBox.hgrow="ALWAYS"/>
             <Label fx:id="adminLabel" text="Admin Panel"/>
-            <Button text="Logout" onAction="#handleLogout"/>
+            <Button text="Logout" onAction="#handleLogout" styleClass="button-logout"/>
         </HBox>
     </top>
 
     <center>
         <StackPane fx:id="contentHost">
             <children>
-                <VBox fx:id="dashboardOverviewPane" spacing="16" VBox.vgrow="ALWAYS">
+                <VBox fx:id="dashboardOverviewPane" spacing="16">
                     <padding>
                         <Insets top="16" right="16" bottom="16" left="16"/>
                     </padding>
