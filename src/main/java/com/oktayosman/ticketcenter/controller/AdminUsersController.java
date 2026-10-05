@@ -43,7 +43,7 @@ public class AdminUsersController {
     private final FilteredList<User> filteredUsers = new FilteredList<>(masterUsers, user -> true);
     private final SortedList<User> sortedUsers = new SortedList<>(filteredUsers);
 
-    private Runnable onBackToDashboard;
+    private Runnable onBack;
     private User selectedUser;
 
     @Autowired
@@ -81,14 +81,14 @@ public class AdminUsersController {
         clearSelection();
     }
 
-    public void setOnBackToDashboard(Runnable onBackToDashboard) {
-        this.onBackToDashboard = onBackToDashboard;
+    public void setOnBack(Runnable onBack) {
+        this.onBack = onBack;
     }
 
     @FXML
-    private void handleBack() {
-        if (onBackToDashboard != null) {
-            onBackToDashboard.run();
+    public void handleBack() {
+        if (onBack != null) {
+            onBack.run();
         }
     }
 

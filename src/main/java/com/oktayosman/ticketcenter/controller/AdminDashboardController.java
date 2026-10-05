@@ -88,7 +88,7 @@ public class AdminDashboardController {
 
     private void showUsersManagement() {
         showView("/fxml/admin_users.fxml", "user management",
-                (AdminUsersController controller) -> controller.setOnBackToDashboard(this::showDashboardOverview));
+                (AdminUsersController controller) -> controller.setOnBack(this::showDashboardOverview));
     }
 
     /**
