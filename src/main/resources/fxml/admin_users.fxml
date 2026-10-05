@@ -27,6 +27,7 @@
             </padding>
             <Label text="Users" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
             <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Refresh" onAction="#handleRefresh"/>
             <Button text="← Back to Dashboard" onAction="#handleBack" styleClass="button-secondary"/>
         </HBox>
     </top>
@@ -37,10 +38,7 @@
                 <Insets top="16" right="16" bottom="16" left="16"/>
             </padding>
 
-            <HBox spacing="10">
-                <TextField fx:id="searchField" promptText="Search by name, username, email, or role" HBox.hgrow="ALWAYS"/>
-                <Button text="Refresh" onAction="#handleRefresh" styleClass="button"/>
-            </HBox>
+            <TextField fx:id="searchField" promptText="Search by name, username, email, or role"/>
 
             <TableView fx:id="userTable" VBox.vgrow="ALWAYS">
                 <columns>
