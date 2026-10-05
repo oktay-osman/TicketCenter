@@ -33,7 +33,7 @@
     <center>
         <StackPane fx:id="contentHost">
             <children>
-                <VBox fx:id="dashboardOverviewPane" spacing="16" VBox.vgrow="ALWAYS">
+                <VBox fx:id="dashboardOverviewPane" spacing="16">
                     <padding>
                         <Insets top="16" right="16" bottom="16" left="16"/>
                     </padding>

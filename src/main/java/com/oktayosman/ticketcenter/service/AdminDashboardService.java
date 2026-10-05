@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -67,6 +69,37 @@ public class AdminDashboardService {
     public BigDecimal getTotalRevenue() {
         BigDecimal revenue = ticketSaleRepository.getTotalRevenue();
         return revenue != null ? revenue : BigDecimal.ZERO;
+    }
+
+    /** A single ticket sale, flattened for the admin dashboard activity feed. */
+    public record RecentSale(LocalDateTime soldAt, String eventName, String distributorUsername,
+                             String buyerName, BigDecimal amount, long quantity) {}
+
+    public List<RecentSale> getRecentSales(int limit) {
+        return ticketSaleRepository.findRecentSaleSummaries(PageRequest.of(0, limit)).stream()
+                .map(row -> new RecentSale(
+                        (LocalDateTime) row[0],
+                        (String) row[1],
+                        (String) row[2],
+                        row[3] + " " + row[4],
+                        (BigDecimal) row[5],
+                        ((Number) row[6]).longValue()))
+                .toList();
+    }
+
+    /** Everything the admin overview renders. */
+    public record DashboardSnapshot(int totalUsers, int totalEvents, long ticketsSold,
+                                    BigDecimal revenue, List<RecentSale> recentSales) {}
+
+    /**
+     * Loads the whole overview in one go. These are still five separate statements - they hit
+     * different tables and don't fold into a single query - but one transaction means one
+     * connection instead of five, which is what actually costs on a pooled remote database.
+     */
+    @Transactional(readOnly = true)
+    public DashboardSnapshot getDashboardSnapshot(int recentSalesLimit) {
+        return new DashboardSnapshot(getTotalUsers(), getTotalEvents(), getTotalTicketsSold(),
+                getTotalRevenue(), getRecentSales(recentSalesLimit));
     }
 
     public List<User> getAllUsers() {

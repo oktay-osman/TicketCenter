@@ -4,6 +4,7 @@ import com.oktayosman.ticketcenter.logging.LogUtil;
 import com.oktayosman.ticketcenter.service.AdminDashboardService;
 import com.oktayosman.ticketcenter.util.SessionManager;
 import com.oktayosman.ticketcenter.util.SpringContext;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -12,6 +13,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -20,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
 
 @Component
@@ -27,6 +30,8 @@ public class AdminDashboardController {
 
     private static final Logger logger = LogUtil.getLogger(AdminDashboardController.class);
     private static final String NL = System.lineSeparator();
+    private static final int RECENT_SALES_LIMIT = 15;
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @FXML private Label totalUsersLabel;
     @FXML private Label totalEventsLabel;
@@ -35,6 +40,7 @@ public class AdminDashboardController {
     @FXML private Label adminLabel;
     @FXML private StackPane contentHost;
     @FXML private VBox dashboardOverviewPane;
+    @FXML private ListView<String> recentActivityList;
 
     private final AdminDashboardService adminDashboardService;
 
@@ -45,7 +51,7 @@ public class AdminDashboardController {
 
     @FXML
     public void initialize() {
-        loadDashboardData();
+        recentActivityList.setPlaceholder(new Label("No ticket sales yet."));
         showDashboardOverview();
         String currentUsername = SessionManager.getCurrentUser() != null
                 ? SessionManager.getCurrentUser().getUsername() : "Admin";
@@ -53,13 +59,30 @@ public class AdminDashboardController {
     }
 
     private void loadDashboardData() {
-        totalUsersLabel.setText(String.valueOf(adminDashboardService.getTotalUsers()));
-        totalEventsLabel.setText(String.valueOf(adminDashboardService.getTotalEvents()));
-        totalTicketsLabel.setText(String.valueOf(adminDashboardService.getTotalTicketsSold()));
-        totalRevenueLabel.setText(String.format("€%.2f", adminDashboardService.getTotalRevenue()));
+        AdminDashboardService.DashboardSnapshot snapshot =
+                adminDashboardService.getDashboardSnapshot(RECENT_SALES_LIMIT);
+
+        totalUsersLabel.setText(String.valueOf(snapshot.totalUsers()));
+        totalEventsLabel.setText(String.valueOf(snapshot.totalEvents()));
+        totalTicketsLabel.setText(String.valueOf(snapshot.ticketsSold()));
+        totalRevenueLabel.setText(String.format("€%.2f", snapshot.revenue()));
+
+        recentActivityList.setItems(FXCollections.observableArrayList(
+                snapshot.recentSales().stream()
+                        .map(AdminDashboardController::formatActivityRow)
+                        .toList()));
     }
 
+    private static String formatActivityRow(AdminDashboardService.RecentSale sale) {
+        return String.format("%s   %d × %s   ·   by %s   ·   for %s   ·   €%.2f",
+                DATE_FMT.format(sale.soldAt()), sale.quantity(), sale.eventName(),
+                sale.distributorUsername(), sale.buyerName(), sale.amount());
+    }
+
+    // Every return to the overview reloads it, so a role change or a sale made elsewhere
+    // is reflected rather than leaving stale numbers on screen.
     private void showDashboardOverview() {
+        loadDashboardData();
         contentHost.getChildren().setAll(dashboardOverviewPane);
     }
 
@@ -120,10 +143,7 @@ public class AdminDashboardController {
     @FXML
     public void handleCreateAccount(ActionEvent actionEvent) {
         showView("/fxml/admin_create_account.fxml", "account creation",
-                (AdminCreateAccountController controller) -> controller.setOnBack(() -> {
-                    loadDashboardData();
-                    showDashboardOverview();
-                }));
+                (AdminCreateAccountController controller) -> controller.setOnBack(this::showDashboardOverview));
     }
 
     @FXML

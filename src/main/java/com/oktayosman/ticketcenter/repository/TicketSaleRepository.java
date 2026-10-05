@@ -5,6 +5,7 @@ import com.oktayosman.ticketcenter.model.Event;
 import com.oktayosman.ticketcenter.model.SeatType;
 import com.oktayosman.ticketcenter.model.TicketSale;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -85,4 +86,16 @@ public interface TicketSaleRepository extends JpaRepository<TicketSale, Long> {
     List<Object[]> getRevenueGroupedByDistributorInRange(@Param("distributors") Collection<Distributor> distributors,
                                                           @Param("from") LocalDateTime from,
                                                           @Param("to") LocalDateTime to);
+
+    // Newest sales for the admin dashboard activity feed. A projection rather than an entity
+    // fetch so the per-sale ticket count can be summed in the same statement: join-fetching
+    // s.items alongside a Pageable would make Hibernate paginate the result in memory.
+    @Query("SELECT s.createdAt, e.name, u.username, s.buyerFirstName, s.buyerLastName, "
+            + "s.totalAmount, COALESCE(SUM(i.quantity), 0) "
+            + "FROM TicketSale s JOIN s.event e JOIN s.distributor d JOIN d.user u "
+            + "LEFT JOIN s.items i "
+            + "GROUP BY s.id, s.createdAt, e.name, u.username, s.buyerFirstName, "
+            + "s.buyerLastName, s.totalAmount "
+            + "ORDER BY s.createdAt DESC")
+    List<Object[]> findRecentSaleSummaries(Pageable pageable);
 }
