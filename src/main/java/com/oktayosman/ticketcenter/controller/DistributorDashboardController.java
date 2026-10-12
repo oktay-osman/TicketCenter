@@ -1,5 +1,6 @@
 package com.oktayosman.ticketcenter.controller;
 
+import com.oktayosman.ticketcenter.logging.LogUtil;
 import com.oktayosman.ticketcenter.model.Distributor;
 import com.oktayosman.ticketcenter.model.Notification;
 import com.oktayosman.ticketcenter.model.TicketSale;
@@ -18,6 +19,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +34,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class DistributorDashboardController {
+
+    private static final Logger logger = LogUtil.getLogger(DistributorDashboardController.class);
 
     private static final String DISTRIBUTOR_ROLE_NAME = "DISTRIBUTOR";
 
@@ -92,7 +96,7 @@ public class DistributorDashboardController {
             }
         } catch (Exception e) {
             distributorLabel.setText("Error initializing dashboard: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error initializing distributor dashboard", e);
         }
     }
 
@@ -213,7 +217,7 @@ public class DistributorDashboardController {
             stage.setOnHidden(event -> loadDashboardData());
             stage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error opening the create sale window", e);
         }
     }
 
@@ -229,7 +233,7 @@ public class DistributorDashboardController {
             stage.setTitle("Sales History");
             stage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error opening the sales history window", e);
         }
     }
 
@@ -246,7 +250,7 @@ public class DistributorDashboardController {
             stage.setTitle("TicketCenter - Login");
             stage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error loading the login screen on logout", e);
         }
     }
 }
