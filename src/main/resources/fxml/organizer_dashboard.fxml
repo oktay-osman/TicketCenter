@@ -120,7 +120,7 @@
                 </VBox>
             </Tab>
 
-            <Tab text="Notifications">
+            <Tab text="Notifications" fx:id="notificationsTab">
                 <VBox spacing="12" style="-fx-padding: 20;">
                     <Label text="Notifications" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
                     <HBox spacing="8">
