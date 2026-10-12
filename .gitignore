@@ -41,3 +41,5 @@ build/
 META-INF/
 
 uploads/events
+### Logs ###
+logs/
