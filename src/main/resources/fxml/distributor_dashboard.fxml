@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.BorderPane?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -18,25 +17,27 @@
             prefWidth="1100.0" prefHeight="700.0"
             stylesheets="@../styles.css">
 
+    <!-- TOP BAR (title + logout) -->
     <top>
-        <HBox spacing="10" style="-fx-padding: 10;">
-            <Button text="Create Sale" onAction="#handleCreateSale"/>
-            <Button text="My Sales" onAction="#handleViewSales"/>
-            <Pane HBox.hgrow="ALWAYS"/>
+        <HBox spacing="10" style="-fx-padding: 10; -fx-alignment: CENTER_LEFT;">
+            <Label text="Distributor Dashboard" style="-fx-text-fill: #2c3e50; -fx-font-size: 24px; -fx-font-weight: bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
             <Label fx:id="distributorLabel" text="Distributor Panel"/>
             <Button text="Logout" onAction="#handleLogout" styleClass="button-logout"/>
         </HBox>
     </top>
 
+    <!-- CENTER TABS -->
     <center>
-        <StackPane fx:id="contentHost">
-            <children>
-                <VBox fx:id="dashboardOverviewPane" spacing="16" VBox.vgrow="ALWAYS">
-                    <padding>
-                        <Insets top="16" right="16" bottom="16" left="16"/>
-                    </padding>
-
-                    <Label text="Distributor Dashboard" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+        <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
+            <Tab text="Dashboard">
+                <VBox spacing="12" style="-fx-padding: 20;">
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Overview" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Create Sale" onAction="#handleCreateSale"/>
+                        <Button text="My Sales" onAction="#handleViewSales"/>
+                    </HBox>
 
                     <GridPane hgap="16" vgap="16">
                         <columnConstraints>
@@ -61,47 +62,43 @@
                         </VBox>
                     </GridPane>
 
-                    <Separator/>
-
-                    <Label text="My Profile" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
-                    <VBox spacing="10" style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 16; -fx-border-color: #e5e5e5; -fx-border-radius: 8;">
-                        <GridPane hgap="12" vgap="10">
-                            <columnConstraints>
-                                <ColumnConstraints percentWidth="28"/>
-                                <ColumnConstraints percentWidth="72" hgrow="ALWAYS"/>
-                            </columnConstraints>
-
-                            <Label text="Username:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-                            <Label fx:id="profileUsernameLabel" text="-" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-
-                            <Label text="Email:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-                            <Label fx:id="profileEmailLabel" text="-" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-
-                            <Label text="Commission:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-                            <Label fx:id="profileCommissionLabel" text="0 %" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-
-                            <Label text="Rating:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-                            <Label fx:id="profileRatingLabel" text="Not rated yet" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-                        </GridPane>
-                    </VBox>
-
-                    <Label text="Notifications" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
-                    <VBox spacing="10" style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 16; -fx-border-color: #e5e5e5; -fx-border-radius: 8;">
-                        <HBox spacing="8" alignment="CENTER_LEFT">
-                            <Label fx:id="unreadNotificationsLabel" text="Unread: 0" style="-fx-font-weight: bold;"/>
-                            <Pane HBox.hgrow="ALWAYS"/>
-                            <Button text="Refresh" onAction="#handleRefreshNotifications"/>
-                            <Button text="Mark Selected Read" onAction="#handleMarkSelectedNotificationRead"/>
-                            <Button text="Mark All Read" onAction="#handleMarkAllNotificationsRead"/>
-                        </HBox>
-                        <ListView fx:id="notificationsList" prefHeight="150"/>
-                    </VBox>
-
                     <Label text="Recent Sales" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
                     <ListView fx:id="recentSalesList" VBox.vgrow="ALWAYS"/>
                 </VBox>
-            </children>
-        </StackPane>
+            </Tab>
+
+            <Tab text="Notifications" fx:id="notificationsTab">
+                <VBox spacing="12" style="-fx-padding: 20;">
+                    <Label text="Notifications" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                    <HBox spacing="8">
+                        <Button text="Refresh" onAction="#handleRefreshNotifications"/>
+                        <Button text="Mark Selected Read" onAction="#handleMarkSelectedNotificationRead"/>
+                        <Button text="Mark All Read" onAction="#handleMarkAllNotificationsRead"/>
+                    </HBox>
+                    <ListView fx:id="notificationsList" VBox.vgrow="ALWAYS"/>
+                </VBox>
+            </Tab>
+
+            <Tab text="Profile">
+                <VBox spacing="14" style="-fx-padding: 20;">
+                    <Label text="My Profile" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+                    <GridPane hgap="12" vgap="12">
+                        <Label text="Username:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <Label fx:id="profileUsernameLabel" text="-" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                        <Label text="Email:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <Label fx:id="profileEmailLabel" text="-" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                        <Label text="Commission:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <Label fx:id="profileCommissionLabel" text="0 %" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                        <Label text="Rating:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <Label fx:id="profileRatingLabel" text="Not rated yet" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                    </GridPane>
+                </VBox>
+            </Tab>
+        </TabPane>
     </center>
 
 </BorderPane>

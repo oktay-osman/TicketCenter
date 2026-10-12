@@ -15,8 +15,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,14 +40,13 @@ public class DistributorDashboardController {
     @FXML private Label commissionLabel;
     @FXML private Label distributorLabel;
     @FXML private ListView<String> recentSalesList;
-    @FXML private StackPane contentHost;
-    @FXML private VBox dashboardOverviewPane;
+    @FXML private TabPane mainTabPane;
+    @FXML private Tab notificationsTab;
     @FXML private Label profileUsernameLabel;
     @FXML private Label profileEmailLabel;
     @FXML private Label profileCommissionLabel;
     @FXML private Label profileRatingLabel;
     @FXML private ListView<String> notificationsList;
-    @FXML private Label unreadNotificationsLabel;
 
     private final DistributorService distributorService;
     private final NotificationService notificationService;
@@ -83,7 +82,11 @@ public class DistributorDashboardController {
                 loadDashboardData();
                 loadProfileData();
                 loadNotifications();
-                showDashboardOverview();
+                mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+                    if (newTab == notificationsTab) {
+                        loadNotifications();
+                    }
+                });
             } else {
                 distributorLabel.setText("Distributor record not found for: " + sessionUser.getUsername());
             }
@@ -131,10 +134,6 @@ public class DistributorDashboardController {
         profileRatingLabel.setText(currentDistributor.getRating() != null
                 ? String.format("%.1f / 5", currentDistributor.getRating())
                 : "Not rated yet");
-    }
-
-    private void showDashboardOverview() {
-        contentHost.getChildren().setAll(dashboardOverviewPane);
     }
 
     @FXML
@@ -196,9 +195,9 @@ public class DistributorDashboardController {
         }
 
         notificationsList.setItems(FXCollections.observableArrayList(rows));
-        if (unreadNotificationsLabel != null) {
-            unreadNotificationsLabel.setText("Unread: " + unreadNotifications.size());
-        }
+        notificationsTab.setText(unreadNotifications.isEmpty()
+                ? "Notifications"
+                : "Notifications (" + unreadNotifications.size() + ")");
     }
 
     @FXML
@@ -237,7 +236,7 @@ public class DistributorDashboardController {
     @FXML
     public void handleLogout() {
         SessionManager.logout();
-        Stage stage = (Stage) contentHost.getScene().getWindow();
+        Stage stage = (Stage) mainTabPane.getScene().getWindow();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
             loader.setControllerFactory(SpringContext::getBean);

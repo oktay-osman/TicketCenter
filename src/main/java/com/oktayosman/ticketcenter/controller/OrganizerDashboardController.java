@@ -98,6 +98,7 @@ public class OrganizerDashboardController {
     @FXML private Button saveProfileButton;
 
     // NOTIFICATIONS TAB
+    @FXML private Tab notificationsTab;
     @FXML private ListView<String> notificationsListView;
     @FXML private Button refreshNotificationsButton;
     @FXML private Button markNotificationReadButton;
@@ -214,7 +215,7 @@ public class OrganizerDashboardController {
             String tabText = newTab.getText();
             if ("My Events".equals(tabText)) {
                 loadOrganizerEvents();
-            } else if ("Notifications".equals(tabText)) {
+            } else if (newTab == notificationsTab) {
                 loadNotifications();
             } else if ("Profile".equals(tabText)) {
                 loadOrganizerProfile();
@@ -844,6 +845,9 @@ public class OrganizerDashboardController {
             rows.add("No unread notifications.");
         }
         notificationsListView.setItems(FXCollections.observableArrayList(rows));
+        notificationsTab.setText(unreadNotifications.isEmpty()
+                ? "Notifications"
+                : "Notifications (" + unreadNotifications.size() + ")");
     }
 
     private void handleMarkSelectedNotificationRead() {
